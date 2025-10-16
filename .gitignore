@@ -1,0 +1,46 @@
+# Ignore all config directories
+actualbudget_config/
+autobrr_config/
+cross-seed_config/
+gluetun_config/
+homeassistant_config/
+immich_config/
+immich_ml_models/
+immich_postgres_data/
+jellyfin_config/
+jellyseerr_config/
+jellystat_config/
+lazylibrarian_config/
+lidarr_config/
+prowlarr_config/
+qbittorrent_config/
+radarr_config/
+recyclarr_config/
+sonarr_config/
+tdarr_config/
+tinymediamanager_config/
+traefik_config/
+wizarr_config/
+
+# Ignore sensitive files
+.env
+secrets.yaml
+
+# Ignore database files
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+
+# Ignore log files
+*.log
+logs/
+Logs/
+errors
+
+# Ignore other generated files
+*.pid
+*.bak
+*.lock
+.HA_VERSION
+*.tgz

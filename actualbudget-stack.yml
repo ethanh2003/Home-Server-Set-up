@@ -1,0 +1,16 @@
+networks:
+  default:
+    driver: bridge
+
+services:
+  actualbudget:
+    image: actualbudget/actual-server:latest
+    container_name: actualbudget
+    ports:
+      - "5006:5006"
+    volumes:
+      - ./actualbudget_config:/data
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+    restart: unless-stopped
