@@ -1,0 +1,21 @@
+services:
+  calibre:
+    image: lscr.io/linuxserver/calibre:latest
+    container_name: calibre
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+    volumes:
+      - ./calibre_config:/config
+      - ${MEDIA_PATH}/books:/data/books
+    ports:
+      - 8082:8080
+      - 8083:8181
+    networks:
+      - calibre_network
+    restart: unless-stopped
+
+networks:
+  calibre_network:
+    driver: bridge

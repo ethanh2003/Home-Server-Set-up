@@ -20,6 +20,7 @@ services:
       - "7878:7878" # radarr
       - "8989:8989" # sonarr
       - "8686:8686" # lidarr
+      - "6969:6969" # whisparr
       - "7474:7474" # autobrr
       - "5299:5299" # lazylibrarian
     volumes:
@@ -47,6 +48,11 @@ services:
       - PGID=${PGID}
       - TZ=${TZ}
       - WEBUI_PORT=8080
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2g
     depends_on:
       - gluetun
     restart: unless-stopped
@@ -61,6 +67,11 @@ services:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ}
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1g
     depends_on:
       - gluetun
     restart: unless-stopped
@@ -76,6 +87,11 @@ services:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ}
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2g
     depends_on:
       - gluetun
     restart: unless-stopped
@@ -91,6 +107,11 @@ services:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ}
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2g
     depends_on:
       - gluetun
     restart: unless-stopped
@@ -101,6 +122,21 @@ services:
     network_mode: "service:gluetun"
     volumes:
       - ./lidarr_config:/config
+      - ${MEDIA_PATH}:/data
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    depends_on:
+      - gluetun
+    restart: unless-stopped
+
+  whisparr:
+    image: ghcr.io/hotio/whisparr:latest
+    container_name: whisparr
+    network_mode: "service:gluetun"
+    volumes:
+      - ./whisparr_config:/config
       - ${MEDIA_PATH}:/data
     environment:
       - PUID=${PUID}
@@ -142,6 +178,7 @@ services:
   cross-seed:
     image: ghcr.io/cross-seed/cross-seed:latest
     container_name: cross-seed
+    command: daemon
     network_mode: "service:gluetun"
     volumes:
       - ./cross-seed_config:/config
@@ -152,3 +189,32 @@ services:
     depends_on:
       - gluetun
     restart: unless-stopped
+
+  jellystat-db:
+    image: 'postgres:15.2'
+    shm_size: 1gb
+    container_name: jellystat-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: bR/3ecaY0Srgf95bW149ew==
+    volumes:
+      - './jellystat_db_data:/var/lib/postgresql/data'
+
+  jellystat:
+    image: 'cyfershepard/jellystat:latest'
+    container_name: jellystat
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: bR/3ecaY0Srgf95bW149ew==
+      POSTGRES_IP: jellystat-db
+      POSTGRES_PORT: 5432
+      JWT_SECRET: aKmIGvB7FREVj0d83kL4Lc0P3ZeU9ycVYJFX+H/rstY=
+      TZ: mytimezone # <--- SET YOUR TIMEZONE (e.g., America/New_York)
+    volumes:
+      - './jellystat_config:/app/backend/backup-data'
+    depends_on:
+      - jellystat-db
+    ports:
+      - "3000:3000"

@@ -44,3 +44,9 @@ errors
 *.lock
 .HA_VERSION
 *.tgz
+
+calibre_config/
+
+portainer_data/
+
+whisparr_config/

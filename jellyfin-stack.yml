@@ -15,6 +15,11 @@ services:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ}
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 4g
     restart: unless-stopped
 
   jellyseerr:

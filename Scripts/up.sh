@@ -1,6 +1,10 @@
 #!/bin/bash
-docker compose -f arr-stack.yml up -d --remove-orphans
-docker compose -f jellyfin-stack.yml up -d --remove-orphans
-docker compose -f homeassistant-stack.yml up -d --remove-orphans
-docker compose -f actualbudget-stack.yml up -d --remove-orphans
-docker compose -f immich-stack.yml up -d --remove-orphans
+SCRIPT_DIR=$(dirname "$0")
+docker compose \
+  -f "$SCRIPT_DIR/../arr-stack.yml" \
+  -f "$SCRIPT_DIR/../jellyfin-stack.yml" \
+  -f "$SCRIPT_DIR/../homeassistant-stack.yml" \
+  -f "$SCRIPT_DIR/../actualbudget-stack.yml" \
+  -f "$SCRIPT_DIR/../dozzle-stack.yml" \
+  -f "$SCRIPT_DIR/../portainer-stack.yml" \
+  up -d --remove-orphans
