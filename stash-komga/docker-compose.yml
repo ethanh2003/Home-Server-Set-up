@@ -1,0 +1,61 @@
+version: '3.8'
+
+networks:
+  proxy_net:
+    external: true
+
+services:
+  stash:
+    image: stashapp/stash:latest
+    container_name: stash
+    user: "1000:1000"
+    group_add:
+      - "993"
+    restart: unless-stopped
+    ports:
+      - "9999:9999"
+    logging:
+      driver: "json-file"
+      options:
+        max-file: "10"
+        max-size: "2m"
+    environment:
+      - STASH_STASH=/data/
+      - STASH_GENERATED=/generated/
+      - STASH_METADATA=/metadata/
+      - STASH_CACHE=/cache/
+      - STASH_PORT=9999
+    # Enable QSV Hardware Acceleration
+    devices:
+      - /dev/dri:/dev/dri
+
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /home/ethan/docker/stash_config:/root/.stash
+      - /mnt/data_14tb/media/x:/data
+      - /mnt/data_14tb/media/x-data/metadata:/metadata
+      - /home/ethan/docker/stash_cache:/cache
+      - /mnt/data_14tb/media/x-data/blobs:/blobs
+      - /mnt/data_14tb/media/x-data/generated:/generated
+    networks:
+      - proxy_net
+
+  # --- COMIC/MANGA READER ---
+  komga:
+    image: gotson/komga
+    container_name: komga
+    user: "1000:1000"
+    restart: unless-stopped
+    ports:
+      - "25600:25600"
+    environment:
+      - KOMGA_CONFIG_DIR=/config
+    volumes:
+      - /home/ethan/docker/komga_config/komga:/config
+      - /mnt/data_14tb/media/x/comics:/data
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+    networks:
+      - proxy_net

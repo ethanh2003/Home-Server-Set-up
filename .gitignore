@@ -1,0 +1,7 @@
+# Ignore environment files containing secrets
+.env
+.env.*
+!env.example
+
+# Ignore temporary files
+.DS_Store

@@ -1,0 +1,41 @@
+services:
+  kopia:
+    image: kopia/kopia:latest
+    container_name: kopia_backup
+    user: "1000:1000"
+    restart: unless-stopped
+    # "server start" launches the Web UI mode
+    # --insecure allows HTTP (we rely on Nginx/Internal network for security)
+    # --address binds to all interfaces so Docker can bridge it
+    command:
+      - server
+      - start
+      - --insecure
+      - --address=0.0.0.0:51515
+      - --server-username=ethan
+      - --server-password=${kopia_password}
+      - --override-hostname=beelink-server
+      - --disable-csrf-token-checks
+    ports:
+      - "51515:51515"
+    environment:
+      - TZ=America/New_York
+      - KOPIA_PASSWORD=${kopia_password} # Setup auto-connect to repo
+    volumes:
+      # Persist Kopia Configs
+      - /home/ethan/docker/kopia_config/config:/app/config
+      - /home/ethan/docker/kopia_config/cache:/app/cache
+      - /home/ethan/docker/kopia_config/logs:/app/logs
+      # Map Sources (Read-Only Recommended for Safety)
+      - /home/ethan/docker:/source/docker_configs:ro
+      - /home:/source/home_folder:ro
+      - /mnt/data_14tb:/source/mass_storage:ro
+      # Map Destination (Read-Write)
+      - /mnt/aux_500gb_1:/backups
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - proxy_net
+networks:
+  proxy_net:
+    external: true

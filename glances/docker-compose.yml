@@ -1,0 +1,15 @@
+services:
+  monitoring:
+    image: nicolargo/glances:ubuntu-latest-full
+    restart: always
+    container_name: glances-monitoring
+    pid: host
+    network_mode: host
+    privileged: true  # <--- Essential for full network/PID/FS visibility on host mode
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro  # To monitor Docker containers
+      - /etc/os-release:/etc/os-release:ro
+      - /:/host:ro  # <--- To get all host filesystem stats (Drives/Partitions)
+      - /sys/class/block:/sys/class/block:ro # <--- Optional: Can help with Disk I/O detection
+    environment:
+      - "GLANCES_OPT=-w"

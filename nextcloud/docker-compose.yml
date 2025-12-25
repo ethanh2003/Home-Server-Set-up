@@ -1,0 +1,35 @@
+services:
+  nextcloud-aio-mastercontainer:
+    image: ghcr.io/nextcloud-releases/all-in-one:latest
+    container_name: nextcloud-aio-mastercontainer
+    init: true
+    restart: always
+    ports:
+      - "8082:8080" # Interface for the AIO setup wizard
+      - "82:80"
+      - "442:443"
+    environment:
+      - NEXTCLOUD_DATADIR=/mnt/data_14tb/nextcloud_data
+      - APACHE_PORT=11000        # Critical: Moves Nextcloud off port 80/443
+      - APACHE_IP_BINDING=0.0.0.0
+      - SKIP_DOMAIN_VALIDATION=true
+      - NEXTCLOUD_MEMORY_LIMIT=2048M
+    volumes:
+      # 1. Docker Socket (Required for AIO to spawn sibling containers)
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      
+      # 2. Config Persistence
+      # CRITICAL FIX: You cannot have both a local bind mount and a named volume for the same path.
+      # Nextcloud AIO strictly requires the named volume below for backups to work.
+      - nextcloud_aio_mastercontainer:/mnt/docker-aio-config
+      
+      # 3. Data Directory (Matches NEXTCLOUD_DATADIR env var)
+      - /mnt/data_14tb/nextcloud_data:/mnt/data_14tb/nextcloud_data
+      
+      # 4. Cold Storage Backup Target
+      # In the AIO interface, you will enter: /mnt/backup_5tb
+      - /mnt/backup_5tb:/mnt/backup_5tb
+
+volumes:
+  nextcloud_aio_mastercontainer:
+    name: nextcloud_aio_mastercontainer
