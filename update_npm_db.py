@@ -50,11 +50,12 @@ try:
                     forward_port = ?, 
                     forward_scheme = 'http',
                     certificate_id = 1, 
-                    ssl_forced = 1, 
-                    block_exploits = 1,
+                    ssl_forced = 0, 
+                    block_exploits = 0,
                     http2_support = 0,
-                    hsts_enabled = 1,
-                    hsts_subdomains = 0
+                    hsts_enabled = 0,
+                    hsts_subdomains = 0,
+                    allow_websocket_upgrade = 0
                 WHERE id = ?
             """, (now, domain_names_json, forward_host, forward_port, host_id))
         else:
@@ -70,9 +71,9 @@ try:
             """, (
                 host_id, now, now, 1, 0, 
                 domain_names_json, forward_host, forward_port, 0, 
-                1, 1, 0, 1, 
-                '', meta_json, 1, 0, 
-                'http', 1, '[]', 1, 0
+                1, 0, 0, 0, 
+                '', meta_json, 0, 0, 
+                'http', 1, '[]', 0, 0
             ))
 
     conn.commit()

@@ -21,6 +21,40 @@ tdarr_config/
 tinymediamanager_config/
 traefik_config/
 wizarr_config/
+abs_config/
+abs_metadata/
+actual_budget_config/
+authentik_config/
+authentik_config_v2/
+bookstack_config/
+cwa_config/
+davmail_config/
+grafana_config/
+grafana_provisioning/
+hass_config/
+home_assistant_config/
+homepage_config/
+komga_config/
+kopia_config/
+lazy_librarian_config/
+loki_config/
+loki_data/
+matter_config/
+minecraft_data/
+mosquitto_config/
+nginx_config/
+paperless-ngx_config/
+planka_config/
+prometheus_config/
+prometheus_data/
+promtail_config/
+readarr_config/
+ring-mqtt_config/
+ryot_config/
+snappymail_config/
+stacks/
+stash_config/
+temp_downloads/
 
 # Ignore sensitive files
 .env
@@ -31,6 +65,7 @@ secrets.yaml
 *.db-shm
 *.db-wal
 *.sqlite
+.db_dumps/
 
 # Ignore log files
 *.log
@@ -44,6 +79,7 @@ errors
 *.lock
 .HA_VERSION
 *.tgz
+*.tar.gz
 
 calibre_config/
 
