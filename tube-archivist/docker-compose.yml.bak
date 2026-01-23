@@ -1,0 +1,95 @@
+version: "3.8"
+
+networks:
+  proxy_net:
+    external: true
+
+services:
+  tubearchivist:
+    container_name: tubearchivist
+    restart: unless-stopped
+    image: bbilly1/tubearchivist
+    ports:
+      - 8002:8000
+    volumes:
+      - /mnt/data_14tb/media/youtube:/youtube
+      - cache:/cache
+    devices:
+      - /dev/dri:/dev/dri
+    group_add:
+      - "993"
+    environment:
+      - ES_URL=http://archivist-es:9200
+      - REDIS_CON=redis://archivist-redis:6379
+      - HOST_UID=1000
+      - HOST_GID=1000
+      - TA_HOST=http://192.168.1.113:8002
+      - TA_USERNAME=ethan
+      - TA_PASSWORD=Eherring1
+      - ELASTIC_PASSWORD=Eherring1
+      - TZ=America/New_York
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health/"]
+      interval: 2m
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    depends_on:
+      - archivist-es
+      - archivist-redis
+    networks:
+      - proxy_net
+    deploy:
+      resources:
+        limits:
+          memory: 2048M
+
+  archivist-redis:
+    image: redis
+    container_name: archivist-redis
+    restart: unless-stopped
+    user: 1000:1000
+    expose:
+      - "6379"
+    volumes:
+      - redis:/data
+    depends_on:
+      - archivist-es
+    networks:
+      - proxy_net
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  archivist-es:
+    image: bbilly1/tubearchivist-es
+    container_name: archivist-es
+    user: 1000:1000
+    restart: unless-stopped
+    environment:
+      - "ELASTIC_PASSWORD=Eherring1"
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+      - "xpack.security.enabled=true"
+      - "discovery.type=single-node"
+      - "path.repo=/usr/share/elasticsearch/data/snapshot"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - es:/usr/share/elasticsearch/data
+    expose:
+      - "9200"
+    networks:
+      - proxy_net
+    deploy:
+      resources:
+        limits:
+          memory: 2048M
+
+volumes:
+  media:
+  cache:
+  redis:
+  es:

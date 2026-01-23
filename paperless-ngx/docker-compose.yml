@@ -1,0 +1,100 @@
+services:
+  broker:
+    image: docker.io/library/redis:8
+    restart: unless-stopped
+    volumes:
+    - redisdata:/data
+    networks:
+    - proxy_net
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    healthcheck:
+      test:
+      - CMD
+      - redis-cli
+      - ping
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  webserver:
+    image: ghcr.io/paperless-ngx/paperless-ngx:latest
+    container_name: paperless
+    restart: unless-stopped
+    depends_on:
+    - broker
+    - gotenberg
+    - tika
+    ports:
+    - 8164:8000
+    volumes:
+    - /home/ethan/docker/paperless-ngx_config/data:/usr/src/paperless/data
+    - /mnt/data_14tb/paperless/media:/usr/src/paperless/media
+    - /mnt/aux_raid/from_aux_1/paperless/export:/usr/src/paperless/export
+    - /mnt/data_14tb/paperless/consume:/usr/src/paperless/consume
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8000
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    environment:
+      PAPERLESS_REDIS: redis://broker:6379
+      PAPERLESS_TIKA_ENABLED: 1
+      PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://gotenberg:3000
+      PAPERLESS_TIKA_ENDPOINT: http://tika:9998
+      PAPERLESS_TIKA_MIME_TYPES: text/html
+      PAPERLESS_CSRF_TRUSTED_ORIGINS: https://*
+    networks:
+    - proxy_net
+    deploy:
+      resources:
+        limits:
+          memory: 2048M
+  gotenberg:
+    image: docker.io/gotenberg/gotenberg:8.25
+    restart: unless-stopped
+    command:
+    - gotenberg
+    - --chromium-disable-javascript=true
+    - --chromium-allow-list=file:///tmp/.*
+    networks:
+    - proxy_net
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+  tika:
+    image: docker.io/apache/tika:latest
+    restart: unless-stopped
+    networks:
+    - proxy_net
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
+  davmail:
+    image: jberrenberg/davmail:latest
+    restart: unless-stopped
+    user: root
+    ports:
+    - 1143:1143
+    - 1080:1080
+    volumes:
+    - /home/ethan/docker/davmail_config/davmail.properties:/etc/davmail/davmail.properties
+    - /home/ethan/docker/davmail_config/davmail.log:/var/log/davmail/davmail.log
+    networks:
+    - proxy_net
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+volumes:
+  redisdata: null
+networks:
+  proxy_net:
+    external: true

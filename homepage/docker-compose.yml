@@ -1,14 +1,15 @@
+version: '3.8'
+
 services:
   homepage:
     image: ghcr.io/gethomepage/homepage:latest
     container_name: homepage
-    ports:
-      - 3000:3000
     volumes:
-      - /home/ethan/docker/homepage_config:/app/config # Make sure your local config directory exists
-      - /var/run/docker.sock:/var/run/docker.sock:ro # (optional) For docker integrations, see alternative methods
-    environment:
-      HOMEPAGE_ALLOWED_HOSTS: gethomepage.dev,192.168.1.113:3000,homepage.ethanh.online # required, may need port. See gethomepage.dev/installation/#homepage_allowed_hosts
+      - /home/ethan/docker/homepage_config:/app/config
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - 3002:3000
+    restart: unless-stopped
     networks:
       - proxy_net
 

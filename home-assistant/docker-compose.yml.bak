@@ -1,0 +1,54 @@
+version: "3.8"
+
+services:
+  home-assistant:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    container_name: HomeAssistant
+    network_mode: host # Required for mDNS/Discovery
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    devices:
+      - /dev/dri:/dev/dri # Hardware Acceleration for N150
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /run/dbus:/run/dbus:ro # Vital for Bluetooth communication
+      - /home/ethan/docker/home_assistant_config:/config
+      - /mnt/data_14tb:/mnt/Media
+    restart: unless-stopped
+
+  mosquitto:
+    image: eclipse-mosquitto:latest
+    container_name: mosquitto
+    restart: unless-stopped
+    # Exposing ports is critical since HA is in host mode
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - /home/ethan/docker/mosquitto_config:/mosquitto/config
+      - /home/ethan/docker/mosquitto_data:/mosquitto/data
+      - /home/ethan/docker/mosquitto_log:/mosquitto/log
+    networks:
+      - proxy_net
+
+  ring-mqtt:
+    image: tsightler/ring-mqtt:latest
+    container_name: ring-mqtt
+    restart: unless-stopped
+    depends_on:
+      - mosquitto
+    volumes:
+      - /home/ethan/docker/ring-mqtt_config:/data
+    environment:
+      - MQTTHOST=mosquitto # Connects via Host interface
+      - MQTTPORT=1883
+    devices:
+      - /dev/dri:/dev/dri
+    networks:
+      - proxy_net
+
+networks:
+  proxy_net:
+    external: true

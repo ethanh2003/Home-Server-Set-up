@@ -1,55 +1,57 @@
 networks:
   proxy_net:
     external: true
-
 services:
   jellyfin:
     image: lscr.io/linuxserver/jellyfin:latest
     container_name: jellyfin
     ports:
-      - "8096:8096"
+    - 8096:8096
     devices:
-      - /dev/dri:/dev/dri
+    - /dev/dri:/dev/dri
     volumes:
-      - /home/ethan/docker/jellyfin_config:/config
-      - ${MEDIA_PATH}:/data
-      # --- CRITICAL PERFORMANCE FIX ---
-      # Maps the container's /transcode folder directly to RAM.
-      # No more HDD thrashing during playback.
-      - type: tmpfs
-        target: /transcode
-        tmpfs:
-          size: 2147483648 # 2GB Limit (Adjust based on your total RAM)
+    - /home/ethan/docker/jellyfin_config:/config
+    - ${MEDIA_PATH}:/data
+    - type: tmpfs
+      target: /transcode
+      tmpfs:
+        size: 2147483648
     environment:
-      - TZ=${TZ}
-      - PUID=1000
-      - PGID=1000
-      # OPTIONAL: If you want to force the transcode path via ENV (Not always supported, better to do in UI)
-      # - JELLYFIN_Transcoding__TranscodingTempPath=/transcode
+    - TZ=${TZ}
+    - PUID=1000
+    - PGID=1000
     group_add:
-      - "993" # Verify this matches your host's 'render' group ID
+    - '993'
     restart: unless-stopped
     networks:
-      - proxy_net
+    - proxy_net
     deploy:
       resources:
         limits:
-          memory: 6G
-
+          memory: 4G
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:8096 || wget -q --spider http://localhost:8096 ||
+        exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
   jellyseerr:
     image: fallenbagel/jellyseerr:latest
     container_name: jellyseerr
     ports:
-      - "5055:5055"
+    - 5055:5055
     volumes:
-      - /home/ethan/docker/jellyseerr_config:/app/config
+    - /home/ethan/docker/jellyseerr_config:/app/config
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=${TZ}
+    - PUID=1000
+    - PGID=1000
+    - TZ=${TZ}
     restart: unless-stopped
     networks:
-      - proxy_net
+    - proxy_net
     deploy:
       resources:
         limits:

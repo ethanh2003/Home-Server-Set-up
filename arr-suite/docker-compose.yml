@@ -1,255 +1,278 @@
 networks:
-  default:
-    driver: bridge
   proxy_net:
     external: true
 volumes:
-  pangolin-data:
-  gluetun-config:
-
+  pangolin-data: null
+  gluetun-config: null
 services:
   gluetun:
     image: qmcgaw/gluetun:latest
     container_name: gluetun
     cap_add:
-      - NET_ADMIN
+    - NET_ADMIN
     devices:
-      - /dev/net/tun:/dev/net/tun
+    - /dev/net/tun:/dev/net/tun
     volumes:
-      - /home/ethan/docker/gluetun_config:/gluetun
-      - /home/ethan/docker/gluetun_config/auth:/gluetun/auth
+    - /home/ethan/docker/gluetun_config:/gluetun
+    - /home/ethan/docker/gluetun_config/auth:/gluetun/auth
     environment:
-      - VPN_SERVICE_PROVIDER=custom
-      - VPN_TYPE=wireguard
-      - WIREGUARD_PUBLIC_KEY=d6QfE2GBWT42RpVD5rNEb4qxK+0yPid9rI3bhm7PLm0=
-      - WIREGUARD_PRIVATE_KEY=QK62HZTZ/OEOFUTWK53aCs4HbFs+rKFQ8Cyp3I1jElc=
-      - WIREGUARD_ADDRESSES=10.2.0.2/32 # "Address" under [Interface] in WG Config
-      - VPN_ENDPOINT_IP=89.187.171.239 # "Endpoint" under [Peer] in WG Config
-      - VPN_ENDPOINT_PORT=51820
-      - VPN_DNS_ADDRESS=10.2.0.1 # "DNS" under [Interface] in WG Config
-      - VPN_PORT_FORWARDING=on
-      - VPN_PORT_FORWARDING_PROVIDER=protonvpn
-      # --- VPN Configuration (WireGuard) ---
-      #- VPN_SERVICE_PROVIDER=protonvpn
-      #- VPN_TYPE=openvpn
-      #- VPN_PORT_FORWARDING=on
-      #- OPENVPN_USER=knfFCFKvqlDziNZi+pmp
-      #- OPENVPN_PASSWORD=VOCCxqsUnEeHEqQRQD7ZdTZEUcBTATvD
-      #- SERVER_COUNTRIES=Canada
-      #- PORT_FORWARD_ONLY=true
-      #- DNS_OVER_TLS=no
-      #- WIREGUARD_PUBLIC_KEY=szjIaWj1+sWfmmap7eqtkgHDPl/y8HLHt+eeNbl/0w0=
-      #- WIREGUARD_PRIVATE_KEY=qEkZMrPMbAUI5bFvKUzJvkWzdUD+VJXXVkEz3Skldn0=
-      #- WIREGUARD_ADDRESSES=10.2.0.2/32
-      - TZ=America/New_York
-      - FIREWALL_OUTBOUND_SUBNETS=192.168.0.0/16,172.16.0.0/12
-      # --- Port Forwarding ---
-      - FIREWALL_VPN_INPUT_PORTS_FILE=/gluetun/forwarded_port
-      
-      # --- Other Settings ---
-      #- TZ=${TZ}
+    - VPN_SERVICE_PROVIDER=custom
+    - VPN_TYPE=wireguard
+    - WIREGUARD_PUBLIC_KEY=d6QfE2GBWT42RpVD5rNEb4qxK+0yPid9rI3bhm7PLm0=
+    - WIREGUARD_PRIVATE_KEY=QK62HZTZ/OEOFUTWK53aCs4HbFs+rKFQ8Cyp3I1jElc=
+    - WIREGUARD_ADDRESSES=10.2.0.2/32
+    - VPN_ENDPOINT_IP=89.187.171.239
+    - VPN_ENDPOINT_PORT=51820
+    - VPN_DNS_ADDRESS=10.2.0.1
+    - VPN_PORT_FORWARDING=on
+    - VPN_PORT_FORWARDING_PROVIDER=protonvpn
+    - TZ=America/New_York
+    - FIREWALL_OUTBOUND_SUBNETS=192.168.0.0/16,172.16.0.0/12
+    - FIREWALL_VPN_INPUT_PORTS_FILE=/gluetun/forwarded_port
     ports:
-      # --- WebUI Ports for VPN'd services ---
-      - "8080:8080"   # qBittorrent WebUI
-      - "9696:9696"   # Prowlarr WebUI
-      - "7474:7474"   # Autobrr WebUI
-      - "2468:2468"   # Optional: Cross-seed WebUI
-      - "8019:8019" #seedcross
-      - "8191:8191" #flarrsolver
-      - "6969:6969" #whisparr
-      - "8001:8000" # HTTP proxy
+    - 8080:8080
+    - 9696:9696
+    - 7474:7474
+    - 2468:2468
+    - 8019:8019
+    - 8191:8191
+    - 6969:6969
+    - 8001:8000
+    - 8084:8084
     restart: unless-stopped
     networks:
-      - default
-      - proxy_net
+    - proxy_net
     deploy:
       resources:
         limits:
           memory: 512M
-
+    healthcheck:
+      test:
+      - CMD
+      - /gluetun-entrypoint
+      - healthcheck
+      interval: 10s
+      timeout: 5s
+      retries: 5
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent:latest
     container_name: qbittorrent
-    network_mode: "service:gluetun" # CRITICAL
+    network_mode: service:gluetun
     volumes:
-      - /home/ethan/docker/qbittorrent_config:/config
-      - ${MEDIA_PATH}:/data
-      - /home/ethan/docker/temp_downloads:/incomplete_downloads
+    - /home/ethan/docker/qbittorrent_config:/config
+    - ${MEDIA_PATH}:/data
+    - /home/ethan/docker/temp_downloads:/incomplete_downloads
     environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}
-      - WEBUI_PORT=8080
-      - GSP_GTN_API_KEY=buGZ9Pexa7ZdRXBI9870FRQO1aRoV8zU
-      - DOCKER_MODS=ghcr.io/t-anc/gsp-qbittorent-gluetun-sync-port-mod:main # CRITICAL
+    - PUID=${PUID}
+    - PGID=${PGID}
+    - TZ=${TZ}
+    - WEBUI_PORT=8080
+    - GSP_GTN_API_KEY=XRgEF4W3RcPMQw32BEerUk
+    - DOCKER_MODS=ghcr.io/t-anc/gsp-qbittorent-gluetun-sync-port-mod:main
     depends_on:
-          gluetun:
-            condition: service_healthy
+      gluetun:
+        condition: service_healthy
     restart: unless-stopped
     deploy:
       resources:
         limits:
           memory: 2G
-
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:8080 || wget -q --spider http://localhost:8080 ||
+        exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
   prowlarr:
     image: lscr.io/linuxserver/prowlarr:latest
     container_name: prowlarr
-    network_mode: "service:gluetun" # CRITICAL
+    network_mode: service:gluetun
     volumes:
-      - /home/ethan/docker/prowlarr_config:/config
+    - /home/ethan/docker/prowlarr_config:/config
     environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}
+    - PUID=${PUID}
+    - PGID=${PGID}
+    - TZ=${TZ}
     depends_on:
-          gluetun:
-            condition: service_healthy
+      gluetun:
+        condition: service_healthy
     restart: unless-stopped
     deploy:
       resources:
         limits:
           memory: 512M
-
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:9696 || wget -q --spider http://localhost:9696 ||
+        exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
   autobrr:
     image: ghcr.io/autobrr/autobrr:latest
     container_name: autobrr
-    network_mode: "service:gluetun" # CRITICAL
+    network_mode: service:gluetun
     volumes:
-      - /home/ethan/docker/autobrr_config:/config
+    - /home/ethan/docker/autobrr_config:/config
     environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}
+    - PUID=${PUID}
+    - PGID=${PGID}
+    - TZ=${TZ}
     depends_on:
-      - gluetun
+    - gluetun
     restart: unless-stopped
     deploy:
       resources:
         limits:
           memory: 512M
-
-
   radarr:
     image: lscr.io/linuxserver/radarr:latest
     container_name: radarr
     volumes:
-      - /home/ethan/docker/radarr_config:/config
-      - ${MEDIA_PATH}:/data
+    - /home/ethan/docker/radarr_config:/config
+    - ${MEDIA_PATH}:/data
     environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}
+    - PUID=${PUID}
+    - PGID=${PGID}
+    - TZ=${TZ}
     ports:
-      - "7878:7878"
+    - 7878:7878
     restart: unless-stopped
     networks:
-      - default
-      - proxy_net
+    - proxy_net
     deploy:
       resources:
         limits:
           memory: 1G
-
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:7878 || wget -q --spider http://localhost:7878 ||
+        exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
   sonarr:
     image: lscr.io/linuxserver/sonarr:latest
     container_name: sonarr
     volumes:
-      - /home/ethan/docker/sonarr_config:/config
-      #- /home/ethan/docker/sonarr_addons/custom-services:/custom-services.d
-      #- /home/ethan/docker/sonarr_addons/custom-cont:/custom-cont-init.d
-
-      - ${MEDIA_PATH}:/data
+    - /home/ethan/docker/sonarr_config:/config
+    - ${MEDIA_PATH}:/data
     environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}
+    - PUID=${PUID}
+    - PGID=${PGID}
+    - TZ=${TZ}
     ports:
-      - "8989:8989"
+    - 8989:8989
     restart: unless-stopped
     networks:
-      - default
-      - proxy_net
+    - proxy_net
     deploy:
       resources:
         limits:
           memory: 1G
-
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:8989 || wget -q --spider http://localhost:8989 ||
+        exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
   lidarr:
     image: lscr.io/linuxserver/lidarr:latest
     container_name: lidarr
     volumes:
-      - /home/ethan/docker/lidarr_config:/config
-      - ${MEDIA_PATH}:/data
+    - /home/ethan/docker/lidarr_config:/config
+    - ${MEDIA_PATH}:/data
     environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}
+    - PUID=${PUID}
+    - PGID=${PGID}
+    - TZ=${TZ}
     ports:
-      - "8686:8686"
+    - 8686:8686
     restart: unless-stopped
     networks:
-      - default
-      - proxy_net
+    - proxy_net
     deploy:
       resources:
         limits:
           memory: 1G
-
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:8686 || wget -q --spider http://localhost:8686 ||
+        exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
   whisparr:
     image: ghcr.io/hotio/whisparr:latest
     container_name: whisparr
-    network_mode: "service:gluetun" # CRITICAL
+    network_mode: service:gluetun
     volumes:
-      - /home/ethan/docker/whisparr_config:/config
-      - ${MEDIA_PATH}:/data
+    - /home/ethan/docker/whisparr_config:/config
+    - ${MEDIA_PATH}:/data
     environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}
-
+    - PUID=${PUID}
+    - PGID=${PGID}
+    - TZ=${TZ}
     restart: unless-stopped
     depends_on:
-          gluetun:
-            condition: service_healthy
+      gluetun:
+        condition: service_healthy
     deploy:
       resources:
         limits:
           memory: 512M
-    
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:6969 || wget -q --spider http://localhost:6969 ||
+        exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
   lazylibrarian:
     image: lscr.io/linuxserver/lazylibrarian:latest
     container_name: lazylibrarian
     environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}
+    - PUID=${PUID}
+    - PGID=${PGID}
+    - TZ=${TZ}
     volumes:
-      - /home/ethan/docker/lazylibrarian_config:/config
-      - ${MEDIA_PATH}:/data
+    - /home/ethan/docker/lazy_librarian_config:/config
+    - ${MEDIA_PATH}:/data
     ports:
-      - "5299:5299"
+    - 5299:5299
     restart: unless-stopped
     networks:
-      - default
-      - proxy_net
+    - proxy_net
     deploy:
       resources:
         limits:
           memory: 1024M
-
   flaresolverr:
-    # DockerHub mirror flaresolverr/flaresolverr:latest
     image: ghcr.io/flaresolverr/flaresolverr:latest
     container_name: flaresolverr
-    network_mode: "service:gluetun" # CRITICAL
+    network_mode: service:gluetun
     environment:
-      - LOG_LEVEL=${LOG_LEVEL:-info}
-      - LOG_FILE=${LOG_FILE:-none}
-      - LOG_HTML=${LOG_HTML:-false}
-      - CAPTCHA_SOLVER=${CAPTCHA_SOLVER:-none}
-      - TZ=Europe/London
+    - LOG_LEVEL=${LOG_LEVEL:-info}
+    - LOG_FILE=${LOG_FILE:-none}
+    - LOG_HTML=${LOG_HTML:-false}
+    - CAPTCHA_SOLVER=${CAPTCHA_SOLVER:-none}
+    - TZ=${TZ}
     volumes:
-      - /var/lib/flaresolver:/config
+    - /var/lib/flaresolver:/config
     depends_on:
       gluetun:
         condition: service_healthy
@@ -258,3 +281,61 @@ services:
       resources:
         limits:
           memory: 800M
+  audiobookshelf:
+    image: ghcr.io/advplyr/audiobookshelf:latest
+    container_name: audiobookshelf
+    environment:
+    - AUDIOBOOKSHELF_UID=${PUID}
+    - AUDIOBOOKSHELF_GID=${PGID}
+    volumes:
+    - ${MEDIA_PATH}/audiobooks:/audiobooks
+    - ${MEDIA_PATH}/podcasts:/podcasts
+    - /home/ethan/docker/abs_config:/config
+    - /home/ethan/docker/abs_metadata:/metadata
+    ports:
+    - 13378:80
+    restart: unless-stopped
+    networks:
+    - proxy_net
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+  cwa:
+    image: crocodilestick/calibre-web-automated:latest
+    container_name: calibre-web-automated
+    environment:
+    - PUID=${PUID}
+    - PGID=${PGID}
+    - TZ=${TZ}
+    - DOCKER_MODS=linuxserver/mods:universal-calibre
+    volumes:
+    - /home/ethan/docker/cwa_config:/config
+    - ${MEDIA_PATH}/books:/calibre-library
+    - /home/ethan/docker/temp_downloads/cwa_ingest:/cwa-book-ingest
+    ports:
+    - 8083:8083
+    restart: unless-stopped
+    networks:
+    - proxy_net
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+  cwa-downloader:
+    image: ghcr.io/calibrain/calibre-web-automated-book-downloader:latest
+    container_name: cwa-downloader
+    environment:
+    - PUID=${PUID}
+    - PGID=${PGID}
+    - TZ=${TZ}
+    - SEARCH_MODE=direct
+    volumes:
+    - /home/ethan/docker/cwa_downloader_config:/config
+    - /home/ethan/docker/temp_downloads/cwa_ingest:/cwa-book-ingest
+    restart: unless-stopped
+    network_mode: service:gluetun
+    deploy:
+      resources:
+        limits:
+          memory: 512M

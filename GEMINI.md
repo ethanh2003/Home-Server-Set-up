@@ -24,9 +24,9 @@
     * **Usage:** Media Libraries (Plex/Jellyfin), Nextcloud Data.
     * **Mount Point:** `/mnt/data_14tb` (MUST be mounted via UUID in `/etc/fstab` to prevent enumeration drift).
     * **Warning:** Do not place active Databases here (high latency/USB overhead).
-* **Cold Storage (Archive):** 5TB Seagate (Ext4, SMR).
+* **Aux Storage (RAID):** RAID Array.
     * **Usage:** Local Backups, Archives.
-    * **Mount Point:** `/mnt/backup_5tb`
+    * **Mount Point:** `/mnt/aux_raid`
     * **Constraint:** Write-intensive tasks will stall this drive (SMR limitation). Sequential writes only.
 
 ### B. Persistence Standards
@@ -80,5 +80,5 @@
 
 * **USB Failure:** If `/mnt/data_14tb` drops, Docker will hang.
     * *Action:* `docker compose down`, unmount/remount, verify UUID, `docker compose up -d`.
-* **Database Corruption:** Check `/home/ethan/docker` backups on `/mnt/backup_5tb`.
+* **Database Corruption:** Check `/home/ethan/docker` backups on `/mnt/aux_raid`.
 * **Thermal Throttling:** N150 is fan-cooled but compact. Monitor `glances` for temperature spikes >75°C during transcoding.

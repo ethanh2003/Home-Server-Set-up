@@ -1,0 +1,84 @@
+services:
+  postgresql:
+    user: root
+    env_file:
+    - .env
+    environment:
+      POSTGRES_DB: ${PG_DB:-authentik}
+      POSTGRES_PASSWORD: ${PG_PASS:?database password required}
+      POSTGRES_USER: ${PG_USER:-authentik}
+    healthcheck:
+      interval: 30s
+      retries: 5
+      start_period: 20s
+      test:
+      - CMD-SHELL
+      - pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}
+      timeout: 5s
+    image: docker.io/library/postgres:16-alpine
+    restart: unless-stopped
+    volumes:
+    - /home/ethan/docker/authentik_config_v2/database:/var/lib/postgresql/data
+    networks:
+      - proxy_net
+  server:
+    command: server
+    container_name: authentik-server
+    user: 1000:1000
+    depends_on:
+      postgresql:
+        condition: service_healthy
+    env_file:
+    - .env
+    environment:
+      AUTHENTIK_POSTGRESQL__HOST: postgresql
+      AUTHENTIK_POSTGRESQL__NAME: ${PG_DB:-authentik}
+      AUTHENTIK_POSTGRESQL__PASSWORD: ${PG_PASS}
+      AUTHENTIK_POSTGRESQL__USER: ${PG_USER:-authentik}
+      AUTHENTIK_SECRET_KEY: ${AUTHENTIK_SECRET_KEY:?secret key required}
+    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2025.10.3}
+    ports:
+    - ${COMPOSE_PORT_HTTP:-9000}:9000
+    - ${COMPOSE_PORT_HTTPS:-9443}:9443
+    restart: unless-stopped
+    volumes:
+    - /home/ethan/docker/authentik_config_v2/media:/media
+    - /home/ethan/docker/authentik_config_v2/custom-templates:/templates
+    networks:
+      - proxy_net
+  worker:
+    command: worker
+    depends_on:
+      postgresql:
+        condition: service_healthy
+    env_file:
+    - .env
+    environment:
+      AUTHENTIK_POSTGRESQL__HOST: postgresql
+      AUTHENTIK_POSTGRESQL__NAME: ${PG_DB:-authentik}
+      AUTHENTIK_POSTGRESQL__PASSWORD: ${PG_PASS}
+      AUTHENTIK_POSTGRESQL__USER: ${PG_USER:-authentik}
+      AUTHENTIK_SECRET_KEY: ${AUTHENTIK_SECRET_KEY:?secret key required}
+    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2025.10.3}
+    restart: unless-stopped
+    user: root
+    volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+    - /home/ethan/docker/authentik_config_v2/media:/media
+    - /home/ethan/docker/authentik_config_v2/certs:/certs
+    - /home/ethan/docker/authentik_config_v2/custom-templates:/templates
+    networks:
+      - proxy_net
+  authentik-radius:
+    image: ghcr.io/goauthentik/radius:${AUTHENTIK_TAG:-2025.10.3} # Ensure version matches Core
+    container_name: authentik-radius
+    network_mode: host  # <--- Crucial: Removes the "Network unreachable" error
+    restart: unless-stopped
+    environment:
+      # Use localhost since we are in host mode
+      AUTHENTIK_HOST: http://127.0.0.1:9020 
+      AUTHENTIK_INSECURE: "true"
+      AUTHENTIK_TOKEN: "uCdzr6xbodisyIwvoi32sYrbYdjzkQeRkC2hrucBH3FNcnKfefujimovSZPj"
+networks:
+  proxy_net:
+    external: true

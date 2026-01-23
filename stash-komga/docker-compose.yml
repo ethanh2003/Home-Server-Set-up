@@ -8,7 +8,6 @@ services:
   stash:
     image: stashapp/stash:latest
     container_name: stash
-    user: "1000:1000"
     group_add:
       - "993"
     restart: unless-stopped

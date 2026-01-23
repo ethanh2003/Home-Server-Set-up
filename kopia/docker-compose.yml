@@ -31,7 +31,7 @@ services:
       - /home:/source/home_folder:ro
       - /mnt/data_14tb:/source/mass_storage:ro
       # Map Destination (Read-Write)
-      - /mnt/aux_500gb_1:/backups
+      - /mnt/aux_raid/:/backups
     security_opt:
       - no-new-privileges:true
     networks:

@@ -1,0 +1,127 @@
+# Docker Compose file for running paperless from the docker container registry.
+# This file contains everything paperless needs to run.
+# Paperless supports amd64, arm and arm64 hardware.
+# All compose files of paperless configure paperless in the following way:
+#
+# - Paperless is (re)started on system boot, if it was running before shutdown.
+# - Docker volumes for storing data are managed by Docker.
+# - Folders for importing and exporting files are created in the same directory
+#   as this file and mounted to the correct folders inside the container.
+# - Paperless listens on port 8000.
+#
+# SQLite is used as the database. The SQLite file is stored in the data volume.
+#
+# In addition to that, this Docker Compose file adds the following optional
+# configurations:
+#
+# - Apache Tika and Gotenberg servers are started with paperless and paperless
+#   is configured to use these services. These provide support for consuming
+#   Office documents (Word, Excel, PowerPoint and their LibreOffice counter-
+#   parts).
+#
+# To install and update paperless with this file, do the following:
+#
+# - Copy this file as 'docker-compose.yml' and the files 'docker-compose.env'
+#   and '.env' into a folder.
+# - Run 'docker compose pull'.
+# - Run 'docker compose up -d'.
+#
+# For more extensive installation and update instructions, refer to the
+# documentation.
+services:
+  broker:
+    image: docker.io/library/redis:8
+    restart: unless-stopped
+    volumes:
+      - redisdata:/data
+    networks:
+     - proxy_net
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  webserver:
+    image: ghcr.io/paperless-ngx/paperless-ngx:latest
+    container_name: paperless
+    restart: unless-stopped
+    depends_on:
+      - broker
+      - gotenberg
+      - tika
+    ports:
+      - "8164:8000"
+    volumes:
+      - /home/ethan/docker/paperless-ngx_config/data:/usr/src/paperless/data
+      - /mnt/data_14tb/paperless/media:/usr/src/paperless/media
+      - /mnt/aux_500gb_1/paperless/export:/usr/src/paperless/export
+      - /mnt/data_14tb/paperless/consume:/usr/src/paperless/consume
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    environment:
+      PAPERLESS_REDIS: redis://broker:6379
+      PAPERLESS_TIKA_ENABLED: 1
+      PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://gotenberg:3000
+      PAPERLESS_TIKA_ENDPOINT: http://tika:9998
+      PAPERLESS_TIKA_MIME_TYPES: "text/html"
+      PAPERLESS_CSRF_TRUSTED_ORIGINS: https://*
+    networks:
+     - proxy_net
+    deploy:
+      resources:
+        limits:
+          memory: 2048M
+
+  gotenberg:
+    image: docker.io/gotenberg/gotenberg:8.25
+    restart: unless-stopped
+    # The gotenberg chromium route is used to convert .eml files. We do not
+    # want to allow external content like tracking pixels or even javascript.
+    command:
+      - "gotenberg"
+      - "--chromium-disable-javascript=true"
+      - "--chromium-allow-list=file:///tmp/.*"
+    networks:
+     - proxy_net
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  tika:
+    image: docker.io/apache/tika:latest
+    restart: unless-stopped
+    networks:
+     - proxy_net
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
+
+  davmail:
+    image: jberrenberg/davmail:latest
+    restart: unless-stopped
+    user: root
+    ports:
+      - "1143:1143"
+      - "1080:1080"
+    volumes:
+      # The image expects the config at /etc/davmail/
+      - /home/ethan/docker/davmail_config/davmail.properties:/etc/davmail/davmail.properties
+      # Create an empty log file on your SSD to mount
+      - /home/ethan/docker/davmail_config/davmail.log:/var/log/davmail/davmail.log
+    networks:
+     - proxy_net
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+volumes:
+  redisdata:
+networks:
+  proxy_net:
+   external: true
