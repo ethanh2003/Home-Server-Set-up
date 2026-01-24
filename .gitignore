@@ -1,88 +1,53 @@
-# Ignore all config directories
-actualbudget_config/
-autobrr_config/
-cross-seed_config/
-gluetun_config/
-homeassistant_config/
-immich_config/
-immich_ml_models/
-immich_postgres_data/
-jellyfin_config/
-jellyseerr_config/
-jellystat_config/
-lazylibrarian_config/
-lidarr_config/
-prowlarr_config/
-qbittorrent_config/
-radarr_config/
-recyclarr_config/
-sonarr_config/
-tdarr_config/
-tinymediamanager_config/
-traefik_config/
-wizarr_config/
-abs_config/
-abs_metadata/
-actual_budget_config/
-authentik_config/
-authentik_config_v2/
-bookstack_config/
-cwa_config/
-davmail_config/
-grafana_config/
+# OS / System
+.DS_Store
+Thumbs.db
+
+# Global Ignore Patterns for Configuration & Data
+# Matches any directory ending in _config, _data, _db at root or sub-levels
+*_config/
+*_data/
+*_db/
+
+# Matches standard config/data directory names inside service folders
+*/config/
+*/data/
+*/database/
+*/db/
+*/appdata/
+*/metadata/
+
+# Specific Directories (Legacy or irregular names)
+portainer_data/
 grafana_provisioning/
-hass_config/
-home_assistant_config/
-homepage_config/
-komga_config/
-kopia_config/
-lazy_librarian_config/
-loki_config/
-loki_data/
-matter_config/
-minecraft_data/
-mosquitto_config/
-nginx_config/
-paperless-ngx_config/
-planka_config/
-prometheus_config/
-prometheus_data/
-promtail_config/
-readarr_config/
-ring-mqtt_config/
-ryot_config/
-snappymail_config/
-stacks/
-stash_config/
-temp_downloads/
+.db_dumps/
+downloads/
+*/downloads/
+temp/
+*/temp/
 
-# Ignore sensitive files
+# Environment Variables & Secrets
 .env
+*.env
 secrets.yaml
+*.key
+*.pem
+*.crt
 
-# Ignore database files
+# Database Files
 *.db
+*.sqlite
+*.sqlite3
 *.db-shm
 *.db-wal
-*.sqlite
-.db_dumps/
 
-# Ignore log files
+# Logs & Temporary Files
 *.log
 logs/
-Logs/
-errors
-
-# Ignore other generated files
+*/logs/
 *.pid
 *.bak
 *.lock
-.HA_VERSION
-*.tgz
-*.tar.gz
-
-calibre_config/
-
-portainer_data/
-
-whisparr_config/
+__pycache__/
+*.pyc
+.cache/
+*/.cache/
