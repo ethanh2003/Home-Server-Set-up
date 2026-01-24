@@ -1,0 +1,19 @@
+services:
+  homarr:
+    container_name: homarr
+    image: ghcr.io/homarr-labs/homarr:latest
+    user: 1000:1000
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock # Optional, only if you want docker integration
+      - ./homarr_config/appdata:/appdata
+    environment:
+      - SECRET_ENCRYPTION_KEY=444f1822f9987f63319be5f65e0142e0ebcabd7bae7cc57335dde464a40a91d2
+    ports:
+      - '7575:7575'
+    networks:
+      - proxy_net
+
+networks:
+  proxy_net:
+    external: true

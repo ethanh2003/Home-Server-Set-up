@@ -1,0 +1,19 @@
+services:
+  filebrowser:
+    image: filebrowser/filebrowser
+    container_name: filebrowser
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - /mnt:/srv #change 'user' for the name of your account
+      - ./filebrowser_config/appdata/filebrowser:/database #this will create the filebrowser.db file
+      - ./filebrowser_config/appdata/filebrowser:/config #this will create the settings.json file
+    restart: unless-stopped
+    networks:
+      - proxy_net
+    ports:
+      - 8055:80
+networks:
+  proxy_net:
+    external: true

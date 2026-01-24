@@ -1,0 +1,58 @@
+networks:
+  proxy_net:
+    external: true
+services:
+  jellyfin:
+    image: lscr.io/linuxserver/jellyfin:latest
+    container_name: jellyfin
+    ports:
+    - 8096:8096
+    devices:
+    - /dev/dri:/dev/dri
+    volumes:
+    - ./config/jellyfin:/config
+    - ${MEDIA_PATH}:/data
+    - type: tmpfs
+      target: /transcode
+      tmpfs:
+        size: 2147483648
+    environment:
+    - TZ=${TZ}
+    - PUID=1000
+    - PGID=1000
+    group_add:
+    - '993'
+    restart: unless-stopped
+    networks:
+    - proxy_net
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:8096 || wget -q --spider http://localhost:8096 ||
+        exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+  jellyseerr:
+    image: fallenbagel/jellyseerr:latest
+    container_name: jellyseerr
+    ports:
+    - 5055:5055
+    volumes:
+    - ./config/jellyseerr:/app/config
+    environment:
+    - PUID=1000
+    - PGID=1000
+    - TZ=${TZ}
+    restart: unless-stopped
+    networks:
+    - proxy_net
+    deploy:
+      resources:
+        limits:
+          memory: 1G

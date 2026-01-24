@@ -1,0 +1,55 @@
+version: '3.8'
+services:
+  home-assistant:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    container_name: HomeAssistant
+    network_mode: host
+    cap_add:
+    - NET_ADMIN
+    - NET_RAW
+    devices:
+    - /dev/dri:/dev/dri
+    volumes:
+    - /etc/localtime:/etc/localtime:ro
+    - /var/run/docker.sock:/var/run/docker.sock
+    - /run/dbus:/run/dbus:ro
+    - ./config/homeassistant:/config
+    - /mnt/data_14tb:/mnt/Media
+    restart: unless-stopped
+  mosquitto:
+    image: eclipse-mosquitto:latest
+    container_name: mosquitto
+    restart: unless-stopped
+    ports:
+    - 1883:1883
+    - 9001:9001
+    volumes:
+    - ./config/mosquitto/config:/mosquitto/config
+    - ./config/mosquitto/data:/mosquitto/data
+    - ./config/mosquitto/log:/mosquitto/log
+    networks:
+    - proxy_net
+    healthcheck:
+      test: ["CMD", "mosquitto_sub", "-t", "$$SYS/broker/version", "-C", "1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+  ring-mqtt:
+    image: tsightler/ring-mqtt:latest
+    container_name: ring-mqtt
+    restart: unless-stopped
+    depends_on:
+    - mosquitto
+    volumes:
+    - ./config/ring-mqtt:/data
+    environment:
+    - MQTTHOST=mosquitto
+    - MQTTPORT=1883
+    devices:
+    - /dev/dri:/dev/dri
+    networks:
+    - proxy_net
+networks:
+  proxy_net:
+    external: true

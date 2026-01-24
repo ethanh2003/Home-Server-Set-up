@@ -1,0 +1,64 @@
+networks:
+  proxy_net:
+    external: true
+services:
+  ntfy:
+    image: binwiederhier/ntfy:v2.11.0
+    container_name: ntfy
+    command:
+    - serve
+    environment:
+    - UID=1000
+    - GID=1000
+    - NTFY_BASE_URL=http://192.168.1.113:8099
+    - NTFY_CACHE_FILE=/var/cache/ntfy/cache.db
+    - NTFY_AUTH_DEFAULT_ACCESS=deny-all
+    volumes:
+    - /home/ethan/docker/ntfy/cache:/var/cache/ntfy
+    - /home/ethan/docker/ntfy/config:/etc/ntfy
+    ports:
+    - 8099:80
+    restart: unless-stopped
+    networks:
+    - proxy_net
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: uptime-kuma
+    volumes:
+    - /home/ethan/docker/uptime-kuma:/app/data
+    - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+    - 3001:3001
+    depends_on:
+    - ntfy
+    restart: unless-stopped
+    networks:
+    - proxy_net
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:3001 || wget -q --spider http://localhost:3001 ||
+        exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+  diun:
+    image: crazymax/diun:latest
+    container_name: diun
+    command: serve
+    volumes:
+    - /home/ethan/docker/diun:/data
+    - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+    - PUID=1000
+    - PGID=1000
+    - TZ=America/New_York
+    - DIUN_WATCH_WORKERS=5
+    - DIUN_WATCH_SCHEDULE=0 */6 * * *
+    - DIUN_PROVIDERS_DOCKER=true
+    - DIUN_NOTIF_NTFY_ENDPOINT=http://ntfy:80
+    - DIUN_NOTIF_NTFY_TOPIC=updates_topic
+    restart: unless-stopped
+    networks:
+    - proxy_net
