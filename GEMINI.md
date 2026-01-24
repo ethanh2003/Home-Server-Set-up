@@ -28,11 +28,16 @@ Strict file path discipline is enforced to prevent I/O bottlenecks.
     *   **Environment Variable:** `${MEDIA_PATH}` usually points here.
     *   **Usage:** Nextcloud Data, Plex Media, Torrents.
 
-3.  **Cold Storage (Archive/Backup)**
-    *   **Physical:** 5TB Seagate (USB 3.0, SMR).
-    *   **Mount Point:** `/mnt/backup_5tb`.
-    *   **Usage:** Scheduled backups (Borg/Restic/Kopia), Long-term archives.
-    *   **Constraint:** **Write Sensitive (SMR).** Sequential writes only. No torrents or databases.
+3.  **Backup Storage (RAID 5)**
+    *   **Physical:** 3x 500GB HDD (RAID 5 Array).
+    *   **Mount Point:** `/mnt/aux_raid`.
+    *   **Usage:** Primary Backup Target (Kopia Repositories), Database Dumps.
+    *   **Redundancy:** 1-drive failure tolerance.
+
+4.  **Miscellaneous Storage**
+    *   **Physical:** 5TB Seagate (USB 3.0).
+    *   **Mount Point:** `/mnt/misc_5tb`.
+    *   **Usage:** Non-critical scratch space, temporary archives.
 
 ## Directory Structure
 
