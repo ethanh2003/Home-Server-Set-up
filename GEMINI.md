@@ -34,11 +34,6 @@ Strict file path discipline is enforced to prevent I/O bottlenecks.
     *   **Usage:** Primary Backup Target (Kopia Repositories), Database Dumps.
     *   **Redundancy:** 1-drive failure tolerance.
 
-4.  **Miscellaneous Storage**
-    *   **Physical:** 5TB Seagate (USB 3.0).
-    *   **Mount Point:** `/mnt/misc_5tb`.
-    *   **Usage:** Non-critical scratch space, temporary archives.
-
 ## Directory Structure
 
 The project follows a **"One Folder Per Stack"** architecture.
