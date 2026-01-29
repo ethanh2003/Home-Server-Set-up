@@ -2,7 +2,7 @@ import sqlite3
 import json
 from datetime import datetime
 
-db_path = '/home/ethan/docker/nginx_config/data/database.sqlite'
+db_path = '/home/ethan/docker/nginx-proxy-manager/nginx_config/data/database.sqlite'
 
 hosts = [
     (8, ["jellyseerr.ethanh.online"], "jellyseerr", 5055),
