@@ -20,7 +20,7 @@ services:
       - WATCHTOWER_CLEANUP=true
       - WATCHTOWER_SCHEDULE=0 0 4 * * *
       - TZ=America/New_York
-      - DOCKER_API_VERSION=1.44
+      - DOCKER_API_VERSION=1.52
     networks:
       - proxy_net
 

@@ -50,6 +50,17 @@ services:
     - /dev/dri:/dev/dri
     networks:
     - proxy_net
+  matter-server:
+    image: ghcr.io/home-assistant-libs/python-matter-server:stable
+    container_name: python-matter-server
+    restart: unless-stopped
+    # Use host network for Matter to work correctly (MDNS/multicast discovery)
+    network_mode: host
+    security_opt:
+      - apparmor:unconfined
+    volumes:
+    - ./config/matter-server:/data
+    - /run/dbus:/run/dbus:ro
 networks:
   proxy_net:
     external: true

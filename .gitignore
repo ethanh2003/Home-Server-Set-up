@@ -32,6 +32,16 @@ secrets.yaml
 *.key
 *.pem
 *.crt
+*_key
+*_key.pub
+id_rsa*
+id_ed25519*
+id_ecdsa*
+
+# specific backups and large files
+rclone_backup.log
+sftp/host_keys/
+sftp/sftpgo_backup/
 
 # Database Files
 *.db

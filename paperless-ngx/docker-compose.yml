@@ -32,7 +32,7 @@ services:
     - ./paperless-ngx_config/data:/usr/src/paperless/data
     - /mnt/data_14tb/paperless/media:/usr/src/paperless/media
     - /mnt/aux_raid/from_aux_1/paperless/export:/usr/src/paperless/export
-    - /mnt/data_14tb/paperless/consume:/usr/src/paperless/consume
+    - /home/ethan/paperless/consume:/usr/src/paperless/consume
     healthcheck:
       test:
       - CMD
@@ -48,7 +48,8 @@ services:
       PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://gotenberg:3000
       PAPERLESS_TIKA_ENDPOINT: http://tika:9998
       PAPERLESS_TIKA_MIME_TYPES: text/html
-      PAPERLESS_CSRF_TRUSTED_ORIGINS: https://*
+      PAPERLESS_CSRF_TRUSTED_ORIGINS: ${PAPERLESS_URL}
+      PAPERLESS_URL: ${PAPERLESS_URL}
     networks:
     - proxy_net
     deploy:
