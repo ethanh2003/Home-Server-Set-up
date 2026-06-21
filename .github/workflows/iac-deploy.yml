@@ -74,6 +74,7 @@ jobs:
       - name: Verify live deploy root
         run: |
           test -d "$HOMELAB_IAC_ROOT/.git"
+          git config --global --add safe.directory "$HOMELAB_IAC_ROOT"
           live_head="$(git -C "$HOMELAB_IAC_ROOT" rev-parse HEAD)"
           target_head="$(git rev-parse "${{ steps.refs.outputs.head_ref }}")"
           if [[ "$live_head" != "$target_head" ]]; then
