@@ -4,7 +4,7 @@ services:
     container_name: ftp_server
     environment:
       - FTP_USER=printer
-      - FTP_PASS=Eherring1
+      - FTP_PASS=${FTP_PASS}
       - PASV_ADDRESS=192.168.1.113
       - PASV_MIN_PORT=21000
       - PASV_MAX_PORT=21010

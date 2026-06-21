@@ -32,7 +32,7 @@ services:
     container_name: grafana
     restart: unless-stopped
     environment:
-    - GF_SECURITY_ADMIN_PASSWORD=admin
+    - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
     volumes:
     - ./grafana_config:/var/lib/grafana
     - /home/ethan/docker/grafana_provisioning:/etc/grafana/provisioning

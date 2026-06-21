@@ -1,0 +1,25 @@
+services:
+  traefik:
+    image: traefik:v3.5
+    container_name: traefik
+    restart: unless-stopped
+    command:
+      - --api.dashboard=true
+      - --api.insecure=false
+      - --entrypoints.web.address=:80
+      - --providers.file.directory=/etc/traefik/dynamic
+      - --providers.file.watch=true
+      - --log.level=INFO
+      - --accesslog=true
+    ports:
+      # Parallel validation ports. Move Cloudflared to traefik:80 during cutover.
+      - 8088:80
+      - 8090:8080
+    volumes:
+      - ./dynamic:/etc/traefik/dynamic:ro
+    networks:
+      - proxy_net
+
+networks:
+  proxy_net:
+    external: true

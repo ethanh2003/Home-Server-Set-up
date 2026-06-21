@@ -1,0 +1,7 @@
+http:
+  routers:
+    traefik-dashboard:
+      rule: "Host(`traefik.ethanh.online`) || Host(`traefik.ethan-herring.com`)"
+      entryPoints:
+        - web
+      service: api@internal

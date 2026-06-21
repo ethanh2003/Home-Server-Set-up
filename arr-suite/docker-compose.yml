@@ -4,10 +4,22 @@ networks:
 volumes:
   pangolin-data: null
   gluetun-config: null
+x-autoheal: &autoheal
+  autoheal: "true"
+x-vpn-depends-on: &vpn-depends-on
+  gluetun:
+    condition: service_healthy
+    restart: true
+x-qbittorrent-depends-on: &qbittorrent-depends-on
+  qbittorrent:
+    condition: service_healthy
+    restart: true
 services:
   gluetun:
     image: qmcgaw/gluetun:latest
     container_name: gluetun
+    labels:
+      <<: *autoheal
     cap_add:
     - NET_ADMIN
     devices:
@@ -16,17 +28,17 @@ services:
     - ./config/gluetun:/gluetun
     - ./config/gluetun/auth:/gluetun/auth
     environment:
-    - VPN_SERVICE_PROVIDER=custom
-    - VPN_TYPE=wireguard
-    - WIREGUARD_PUBLIC_KEY=d6QfE2GBWT42RpVD5rNEb4qxK+0yPid9rI3bhm7PLm0=
-    - WIREGUARD_PRIVATE_KEY=QK62HZTZ/OEOFUTWK53aCs4HbFs+rKFQ8Cyp3I1jElc=
-    - WIREGUARD_ADDRESSES=10.2.0.2/32
-    - VPN_ENDPOINT_IP=89.187.171.239
-    - VPN_ENDPOINT_PORT=51820
-    - VPN_DNS_ADDRESS=10.2.0.1
-    - VPN_PORT_FORWARDING=on
-    - VPN_PORT_FORWARDING_PROVIDER=protonvpn
-    - TZ=America/New_York
+    - VPN_SERVICE_PROVIDER=${VPN_SERVICE_PROVIDER}
+    - VPN_TYPE=${VPN_TYPE}
+    - WIREGUARD_PUBLIC_KEY=${WIREGUARD_PUBLIC_KEY}
+    - WIREGUARD_PRIVATE_KEY=${WIREGUARD_PRIVATE_KEY}
+    - WIREGUARD_ADDRESSES=${WIREGUARD_ADDRESSES}
+    - VPN_ENDPOINT_IP=${VPN_ENDPOINT_IP}
+    - VPN_ENDPOINT_PORT=${VPN_ENDPOINT_PORT}
+    - VPN_DNS_ADDRESS=${VPN_DNS_ADDRESS}
+    - VPN_PORT_FORWARDING=${VPN_PORT_FORWARDING}
+    - VPN_PORT_FORWARDING_PROVIDER=${VPN_PORT_FORWARDING_PROVIDER}
+    - TZ=${TZ}
     - FIREWALL_OUTBOUND_SUBNETS=192.168.0.0/16,172.16.0.0/12
     - FIREWALL_VPN_INPUT_PORTS_FILE=/gluetun/forwarded_port
     ports:
@@ -54,24 +66,26 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 60s
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent:latest
     container_name: qbittorrent
+    labels:
+      <<: *autoheal
     network_mode: service:gluetun
     volumes:
     - ./config/qbittorrent:/config
     - ${MEDIA_PATH}:/data
-    - ./downloads/temp:/incomplete_downloads
+    - ${SSD_STAGING_PATH}/qbittorrent:/incomplete_downloads
     environment:
     - PUID=${PUID}
     - PGID=${PGID}
     - TZ=${TZ}
     - WEBUI_PORT=8080
-    - GSP_GTN_API_KEY=XRgEF4W3RcPMQw32BEerUk
+    - GSP_GTN_API_KEY=${GSP_GTN_API_KEY}
     - DOCKER_MODS=ghcr.io/t-anc/gsp-qbittorent-gluetun-sync-port-mod:main
     depends_on:
-      gluetun:
-        condition: service_healthy
+      <<: *vpn-depends-on
     restart: unless-stopped
     deploy:
       resources:
@@ -89,6 +103,8 @@ services:
   prowlarr:
     image: lscr.io/linuxserver/prowlarr:latest
     container_name: prowlarr
+    labels:
+      <<: *autoheal
     network_mode: service:gluetun
     volumes:
     - ./config/prowlarr:/config
@@ -99,6 +115,10 @@ services:
     depends_on:
       gluetun:
         condition: service_healthy
+        restart: true
+      qbittorrent:
+        condition: service_healthy
+        restart: true
     restart: unless-stopped
     deploy:
       resources:
@@ -113,26 +133,11 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
-  autobrr:
-    image: ghcr.io/autobrr/autobrr:latest
-    container_name: autobrr
-    network_mode: service:gluetun
-    volumes:
-    - ./config/autobrr:/config
-    environment:
-    - PUID=${PUID}
-    - PGID=${PGID}
-    - TZ=${TZ}
-    depends_on:
-    - gluetun
-    restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          memory: 512M
   radarr:
     image: lscr.io/linuxserver/radarr:latest
     container_name: radarr
+    labels:
+      <<: *autoheal
     volumes:
     - ./config/radarr:/config
     - ${MEDIA_PATH}:/data
@@ -142,6 +147,8 @@ services:
     - TZ=${TZ}
     ports:
     - 7878:7878
+    depends_on:
+      <<: *qbittorrent-depends-on
     restart: unless-stopped
     networks:
     - proxy_net
@@ -161,6 +168,8 @@ services:
   sonarr:
     image: lscr.io/linuxserver/sonarr:latest
     container_name: sonarr
+    labels:
+      <<: *autoheal
     volumes:
     - ./config/sonarr:/config
     - ${MEDIA_PATH}:/data
@@ -170,6 +179,8 @@ services:
     - TZ=${TZ}
     ports:
     - 8989:8989
+    depends_on:
+      <<: *qbittorrent-depends-on
     restart: unless-stopped
     networks:
     - proxy_net
@@ -186,156 +197,3 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
-  lidarr:
-    image: lscr.io/linuxserver/lidarr:latest
-    container_name: lidarr
-    volumes:
-    - ./config/lidarr:/config
-    - ${MEDIA_PATH}:/data
-    environment:
-    - PUID=${PUID}
-    - PGID=${PGID}
-    - TZ=${TZ}
-    ports:
-    - 8686:8686
-    restart: unless-stopped
-    networks:
-    - proxy_net
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-    healthcheck:
-      test:
-      - CMD-SHELL
-      - curl -f http://localhost:8686 || wget -q --spider http://localhost:8686 ||
-        exit 1
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-  whisparr:
-    image: ghcr.io/hotio/whisparr:latest
-    container_name: whisparr
-    network_mode: service:gluetun
-    volumes:
-    - ./config/whisparr:/config
-    - ${MEDIA_PATH}:/data
-    environment:
-    - PUID=${PUID}
-    - PGID=${PGID}
-    - TZ=${TZ}
-    restart: unless-stopped
-    depends_on:
-      gluetun:
-        condition: service_healthy
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-    healthcheck:
-      test:
-      - CMD-SHELL
-      - curl -f http://localhost:6969 || wget -q --spider http://localhost:6969 ||
-        exit 1
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-  lazylibrarian:
-    image: lscr.io/linuxserver/lazylibrarian:latest
-    container_name: lazylibrarian
-    environment:
-    - PUID=${PUID}
-    - PGID=${PGID}
-    - TZ=${TZ}
-    volumes:
-    - ./config/lazylibrarian:/config
-    - ${MEDIA_PATH}:/data
-    ports:
-    - 5299:5299
-    restart: unless-stopped
-    networks:
-    - proxy_net
-    deploy:
-      resources:
-        limits:
-          memory: 1024M
-  flaresolverr:
-    image: ghcr.io/flaresolverr/flaresolverr:latest
-    container_name: flaresolverr
-    network_mode: service:gluetun
-    environment:
-    - LOG_LEVEL=${LOG_LEVEL:-info}
-    - LOG_FILE=${LOG_FILE:-none}
-    - LOG_HTML=${LOG_HTML:-false}
-    - CAPTCHA_SOLVER=${CAPTCHA_SOLVER:-none}
-    - TZ=${TZ}
-    volumes:
-    - /var/lib/flaresolver:/config
-    depends_on:
-      gluetun:
-        condition: service_healthy
-    restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          memory: 800M
-  audiobookshelf:
-    image: ghcr.io/advplyr/audiobookshelf:latest
-    container_name: audiobookshelf
-    environment:
-    - AUDIOBOOKSHELF_UID=${PUID}
-    - AUDIOBOOKSHELF_GID=${PGID}
-    volumes:
-    - ${MEDIA_PATH}/audiobooks:/audiobooks
-    - ${MEDIA_PATH}/podcasts:/podcasts
-    - ./config/abs:/config
-    - ./config/abs_metadata:/metadata
-    ports:
-    - 13378:80
-    restart: unless-stopped
-    networks:
-    - proxy_net
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-  cwa:
-    image: crocodilestick/calibre-web-automated:latest
-    container_name: calibre-web-automated
-    environment:
-    - PUID=${PUID}
-    - PGID=${PGID}
-    - TZ=${TZ}
-    - DOCKER_MODS=linuxserver/mods:universal-calibre
-    volumes:
-    - ./config/cwa:/config
-    - ${MEDIA_PATH}/books:/calibre-library
-    - ./downloads/temp/cwa_ingest:/cwa-book-ingest
-    ports:
-    - 8083:8083
-    restart: unless-stopped
-    networks:
-    - proxy_net
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-  cwa-downloader:
-    image: ghcr.io/calibrain/calibre-web-automated-book-downloader:latest
-    container_name: cwa-downloader
-    environment:
-    - PUID=${PUID}
-    - PGID=${PGID}
-    - TZ=${TZ}
-    - SEARCH_MODE=direct
-    volumes:
-    - ./config/cwa_downloader:/config
-    - ./downloads/temp/cwa_ingest:/cwa-book-ingest
-    restart: unless-stopped
-    network_mode: service:gluetun
-    deploy:
-      resources:
-        limits:
-          memory: 512M

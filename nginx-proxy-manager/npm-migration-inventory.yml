@@ -1,0 +1,499 @@
+# Generated from Nginx Proxy Manager. Review before using for cutover.
+proxy_hosts:
+  - id: 1
+    domains:
+      - actual.ethanh.online
+      - actual.ethan-herring.com
+    forward_scheme: http
+    forward_host: actualbudget
+    forward_port: 5006
+    enabled: true
+    ssl_forced: true
+    http2_support: true
+    websocket: false
+    certificate_id: 4
+    advanced_config: ""
+  - id: 2
+    domains:
+      - jellyfin.ethan-herring.com
+      - jellyfin.ethanh.online
+    forward_scheme: http
+    forward_host: jellyfin
+    forward_port: 8096
+    enabled: true
+    ssl_forced: true
+    http2_support: true
+    websocket: true
+    certificate_id: 4
+    advanced_config: |-
+      # Send only the bare domain root to Moonfin.
+      # This does not affect Jellyfin apps/API clients.
+      location = / {
+          return 302 /Moonfin/Web/;
+      }
+      
+      # Jellyfin uses forwarded headers to know the original client/protocol.
+      proxy_set_header Host $host;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $scheme;
+      proxy_set_header X-Forwarded-Protocol $scheme;
+      proxy_set_header X-Forwarded-Host $http_host;
+      
+      # Jellyfin WebSocket/API reliability.
+      proxy_buffering off;
+      client_max_body_size 20M;
+  - id: 3
+    domains:
+      - immich.ethanh.online
+      - immich.ethan-herring.com
+    forward_scheme: http
+    forward_host: immich_server
+    forward_port: 2283
+    enabled: true
+    ssl_forced: true
+    http2_support: true
+    websocket: false
+    certificate_id: 4
+    advanced_config: ""
+  - id: 7
+    domains:
+      - home.ethanh.online
+      - home.ethan-herring.com
+    forward_scheme: http
+    forward_host: 192.168.1.113
+    forward_port: 8123
+    enabled: true
+    ssl_forced: true
+    http2_support: true
+    websocket: true
+    certificate_id: 4
+    advanced_config: ""
+  - id: 8
+    domains:
+      - jellyseerr.ethanh.online
+    forward_scheme: http
+    forward_host: jellyseerr
+    forward_port: 5055
+    enabled: true
+    ssl_forced: false
+    http2_support: false
+    websocket: false
+    certificate_id: 1
+    advanced_config: ""
+  - id: 10
+    domains:
+      - stash.ethanh.online
+    forward_scheme: http
+    forward_host: stash
+    forward_port: 9999
+    enabled: true
+    ssl_forced: false
+    http2_support: false
+    websocket: false
+    certificate_id: 1
+    advanced_config: ""
+  - id: 12
+    domains:
+      - qbittorrent.ethanh.online
+    forward_scheme: http
+    forward_host: gluetun
+    forward_port: 8080
+    enabled: true
+    ssl_forced: false
+    http2_support: false
+    websocket: false
+    certificate_id: 1
+    advanced_config: ""
+  - id: 13
+    domains:
+      - prowlarr.ethanh.online
+    forward_scheme: http
+    forward_host: gluetun
+    forward_port: 9696
+    enabled: true
+    ssl_forced: false
+    http2_support: false
+    websocket: false
+    certificate_id: 1
+    advanced_config: ""
+  - id: 14
+    domains:
+      - sonarr.ethanh.online
+    forward_scheme: http
+    forward_host: sonarr
+    forward_port: 8989
+    enabled: true
+    ssl_forced: false
+    http2_support: false
+    websocket: false
+    certificate_id: 1
+    advanced_config: ""
+  - id: 15
+    domains:
+      - radarr.ethanh.online
+    forward_scheme: http
+    forward_host: radarr
+    forward_port: 7878
+    enabled: true
+    ssl_forced: false
+    http2_support: false
+    websocket: false
+    certificate_id: 1
+    advanced_config: ""
+  - id: 16
+    domains:
+      - lidarr.ethanh.online
+      - lidarr.ethan-herring.com
+    forward_scheme: http
+    forward_host: lidarr
+    forward_port: 8686
+    enabled: true
+    ssl_forced: false
+    http2_support: false
+    websocket: false
+    certificate_id: 4
+    advanced_config: ""
+  - id: 17
+    domains:
+      - whisparr.ethanh.online
+      - whisparr.ethan-herring.com
+    forward_scheme: http
+    forward_host: gluetun
+    forward_port: 6969
+    enabled: true
+    ssl_forced: false
+    http2_support: false
+    websocket: false
+    certificate_id: 4
+    advanced_config: ""
+  - id: 19
+    domains:
+      - lazylibrarian.ethanh.online
+      - lazylibrarian.ethan-herring.com
+    forward_scheme: http
+    forward_host: lazylibrarian
+    forward_port: 5299
+    enabled: true
+    ssl_forced: false
+    http2_support: false
+    websocket: false
+    certificate_id: 4
+    advanced_config: ""
+  - id: 21
+    domains:
+      - glances.ethanh.online
+    forward_scheme: http
+    forward_host: 192.168.1.113
+    forward_port: 61208
+    enabled: true
+    ssl_forced: false
+    http2_support: false
+    websocket: false
+    certificate_id: 1
+    advanced_config: ""
+  - id: 22
+    domains:
+      - kopia.ethanh.online
+    forward_scheme: http
+    forward_host: kopia_backup
+    forward_port: 51515
+    enabled: true
+    ssl_forced: false
+    http2_support: false
+    websocket: false
+    certificate_id: 1
+    advanced_config: ""
+  - id: 23
+    domains:
+      - dashboard.ethanh.online
+    forward_scheme: http
+    forward_host: homepage
+    forward_port: 3000
+    enabled: true
+    ssl_forced: false
+    http2_support: false
+    websocket: false
+    certificate_id: 1
+    advanced_config: ""
+  - id: 26
+    domains:
+      - homebox.ethanh.online
+      - homebox.ethan-herring.com
+    forward_scheme: http
+    forward_host: homebox
+    forward_port: 7745
+    enabled: true
+    ssl_forced: false
+    http2_support: false
+    websocket: false
+    certificate_id: 4
+    advanced_config: ""
+  - id: 27
+    domains:
+      - portainer.ethanh.online
+      - portainer.ethan-herring.com
+    forward_scheme: http
+    forward_host: portainer
+    forward_port: 9000
+    enabled: true
+    ssl_forced: true
+    http2_support: true
+    websocket: false
+    certificate_id: 4
+    advanced_config: ""
+  - id: 29
+    domains:
+      - grafana.ethanh.online
+      - grafana.ethan-herring.com
+    forward_scheme: http
+    forward_host: grafana
+    forward_port: 3000
+    enabled: true
+    ssl_forced: true
+    http2_support: true
+    websocket: true
+    certificate_id: 4
+    advanced_config: ""
+  - id: 32
+    domains:
+      - paperless.ethanh.online
+      - paperless.ethan-herring.com
+    forward_scheme: http
+    forward_host: paperless
+    forward_port: 8000
+    enabled: true
+    ssl_forced: true
+    http2_support: true
+    websocket: false
+    certificate_id: 4
+    advanced_config: ""
+  - id: 37
+    domains:
+      - tri.ethan-herring.com
+      - tri.ethanh.online
+    forward_scheme: http
+    forward_host: trilium
+    forward_port: 8080
+    enabled: true
+    ssl_forced: false
+    http2_support: false
+    websocket: true
+    certificate_id: 4
+    advanced_config: ""
+  - id: 40
+    domains:
+      - pro.ethanh.online
+      - pro.ethan-herring.com
+    forward_scheme: http
+    forward_host: prometheus
+    forward_port: 9090
+    enabled: true
+    ssl_forced: false
+    http2_support: false
+    websocket: false
+    certificate_id: 4
+    advanced_config: ""
+  - id: 48
+    domains:
+      - print.ethan-herring.com
+      - print.ethanh.online
+    forward_scheme: https
+    forward_host: 192.168.1.158
+    forward_port: 443
+    enabled: true
+    ssl_forced: true
+    http2_support: false
+    websocket: false
+    certificate_id: 4
+    advanced_config: ""
+  - id: 58
+    domains:
+      - sure.ethanh.online
+      - sure.ethan-herring.com
+    forward_scheme: http
+    forward_host: sure-budgeting-web-1
+    forward_port: 3000
+    enabled: true
+    ssl_forced: true
+    http2_support: false
+    websocket: true
+    certificate_id: 4
+    advanced_config: ""
+  - id: 61
+    domains:
+      - cups.ethanh.online
+      - cups.ethan-herring.com
+    forward_scheme: http
+    forward_host: 192.168.1.113
+    forward_port: 631
+    enabled: true
+    ssl_forced: true
+    http2_support: false
+    websocket: false
+    certificate_id: 4
+    advanced_config: ""
+  - id: 62
+    domains:
+      - label.ethanh.online
+      - label.ethan-herring.com
+    forward_scheme: http
+    forward_host: 192.168.1.113
+    forward_port: 8899
+    enabled: true
+    ssl_forced: true
+    http2_support: false
+    websocket: false
+    certificate_id: 4
+    advanced_config: ""
+  - id: 65
+    domains:
+      - dash.ethanh.online
+      - dash.ethan-herring.com
+    forward_scheme: http
+    forward_host: 192.168.1.102
+    forward_port: 3020
+    enabled: true
+    ssl_forced: true
+    http2_support: false
+    websocket: true
+    certificate_id: 4
+    advanced_config: ""
+  - id: 69
+    domains:
+      - registry.ethanh.online
+      - registry.ethan-herring.com
+    forward_scheme: http
+    forward_host: 192.168.1.185
+    forward_port: 5000
+    enabled: true
+    ssl_forced: true
+    http2_support: false
+    websocket: false
+    certificate_id: 4
+    advanced_config: ""
+  - id: 74
+    domains:
+      - work-dash.ethan-herring.com
+      - work-dash.ethanh.online
+    forward_scheme: http
+    forward_host: 192.168.1.187
+    forward_port: 8340
+    enabled: true
+    ssl_forced: true
+    http2_support: false
+    websocket: true
+    certificate_id: 4
+    advanced_config: ""
+  - id: 83
+    domains:
+      - registry-manager.ethanh.online
+      - registry-manager.ethan-herring.com
+    forward_scheme: http
+    forward_host: 192.168.1.185
+    forward_port: 5001
+    enabled: true
+    ssl_forced: true
+    http2_support: false
+    websocket: false
+    certificate_id: 4
+    advanced_config: ""
+  - id: 85
+    domains:
+      - dbgate.ethanh.online
+      - dbgate.ethan-herring.com
+    forward_scheme: http
+    forward_host: 192.168.1.185
+    forward_port: 5002
+    enabled: true
+    ssl_forced: true
+    http2_support: false
+    websocket: true
+    certificate_id: 4
+    advanced_config: ""
+  - id: 87
+    domains:
+      - nextcloud.ethan-herring.com
+      - nextcloud.ethanh.online
+    forward_scheme: http
+    forward_host: 192.168.1.185
+    forward_port: 11000
+    enabled: true
+    ssl_forced: true
+    http2_support: false
+    websocket: true
+    certificate_id: 4
+    advanced_config: ""
+  - id: 92
+    domains:
+      - sb.ethanh.online
+    forward_scheme: http
+    forward_host: 192.168.1.185
+    forward_port: 3000
+    enabled: true
+    ssl_forced: true
+    http2_support: false
+    websocket: true
+    certificate_id: 4
+    advanced_config: ""
+  - id: 93
+    domains:
+      - cock.ethan-herring.com
+    forward_scheme: https
+    forward_host: 192.168.1.113
+    forward_port: 9090
+    enabled: true
+    ssl_forced: true
+    http2_support: false
+    websocket: true
+    certificate_id: 4
+    advanced_config: ""
+  - id: 94
+    domains:
+      - memo.ethan-herring.com
+    forward_scheme: http
+    forward_host: 192.168.1.185
+    forward_port: 5230
+    enabled: true
+    ssl_forced: true
+    http2_support: false
+    websocket: true
+    certificate_id: 4
+    advanced_config: ""
+  - id: 96
+    domains:
+      - spotify.ethanh.online
+    forward_scheme: http
+    forward_host: web
+    forward_port: 3000
+    enabled: true
+    ssl_forced: true
+    http2_support: false
+    websocket: false
+    certificate_id: 4
+    advanced_config: ""
+  - id: 97
+    domains:
+      - spotify-api.ethanh.online
+    forward_scheme: http
+    forward_host: server
+    forward_port: 8080
+    enabled: true
+    ssl_forced: true
+    http2_support: false
+    websocket: false
+    certificate_id: 4
+    advanced_config: ""
+  - id: 98
+    domains:
+      - obsidian.ethanh.online
+      - obsidian.ethan-herring.com
+    forward_scheme: http
+    forward_host: obsidian-livesync-couchdb
+    forward_port: 5984
+    enabled: true
+    ssl_forced: true
+    http2_support: true
+    websocket: false
+    certificate_id: 4
+    advanced_config: ""

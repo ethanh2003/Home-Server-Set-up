@@ -1,0 +1,413 @@
+# Generated from nginx-proxy-manager/npm-migration-inventory.yml.
+http:
+  routers:
+    router-npm-1:
+      rule: "Host(`actual.ethanh.online`) || Host(`actual.ethan-herring.com`)"
+      entryPoints:
+        - web
+      service: service-npm-1
+    router-npm-2:
+      rule: "Host(`jellyfin.ethan-herring.com`) || Host(`jellyfin.ethanh.online`)"
+      entryPoints:
+        - web
+      service: service-npm-2
+      middlewares:
+        - websocket-headers
+    router-npm-3:
+      rule: "Host(`immich.ethanh.online`) || Host(`immich.ethan-herring.com`)"
+      entryPoints:
+        - web
+      service: service-npm-3
+    router-npm-7:
+      rule: "Host(`home.ethanh.online`) || Host(`home.ethan-herring.com`)"
+      entryPoints:
+        - web
+      service: service-npm-7
+      middlewares:
+        - websocket-headers
+    router-npm-8:
+      rule: "Host(`jellyseerr.ethanh.online`)"
+      entryPoints:
+        - web
+      service: service-npm-8
+    router-npm-10:
+      rule: "Host(`stash.ethanh.online`)"
+      entryPoints:
+        - web
+      service: service-npm-10
+    router-npm-12:
+      rule: "Host(`qbittorrent.ethanh.online`)"
+      entryPoints:
+        - web
+      service: service-npm-12
+    router-npm-13:
+      rule: "Host(`prowlarr.ethanh.online`)"
+      entryPoints:
+        - web
+      service: service-npm-13
+    router-npm-14:
+      rule: "Host(`sonarr.ethanh.online`)"
+      entryPoints:
+        - web
+      service: service-npm-14
+    router-npm-15:
+      rule: "Host(`radarr.ethanh.online`)"
+      entryPoints:
+        - web
+      service: service-npm-15
+    router-npm-16:
+      rule: "Host(`lidarr.ethanh.online`) || Host(`lidarr.ethan-herring.com`)"
+      entryPoints:
+        - web
+      service: service-npm-16
+    router-npm-17:
+      rule: "Host(`whisparr.ethanh.online`) || Host(`whisparr.ethan-herring.com`)"
+      entryPoints:
+        - web
+      service: service-npm-17
+    router-npm-19:
+      rule: "Host(`lazylibrarian.ethanh.online`) || Host(`lazylibrarian.ethan-herring.com`)"
+      entryPoints:
+        - web
+      service: service-npm-19
+    router-npm-21:
+      rule: "Host(`glances.ethanh.online`)"
+      entryPoints:
+        - web
+      service: service-npm-21
+    router-npm-22:
+      rule: "Host(`kopia.ethanh.online`)"
+      entryPoints:
+        - web
+      service: service-npm-22
+    router-npm-23:
+      rule: "Host(`dashboard.ethanh.online`)"
+      entryPoints:
+        - web
+      service: service-npm-23
+    router-npm-26:
+      rule: "Host(`homebox.ethanh.online`) || Host(`homebox.ethan-herring.com`)"
+      entryPoints:
+        - web
+      service: service-npm-26
+    router-npm-27:
+      rule: "Host(`portainer.ethanh.online`) || Host(`portainer.ethan-herring.com`)"
+      entryPoints:
+        - web
+      service: service-npm-27
+    router-npm-29:
+      rule: "Host(`grafana.ethanh.online`) || Host(`grafana.ethan-herring.com`)"
+      entryPoints:
+        - web
+      service: service-npm-29
+      middlewares:
+        - websocket-headers
+    router-npm-32:
+      rule: "Host(`paperless.ethanh.online`) || Host(`paperless.ethan-herring.com`)"
+      entryPoints:
+        - web
+      service: service-npm-32
+    router-npm-37:
+      rule: "Host(`tri.ethan-herring.com`) || Host(`tri.ethanh.online`)"
+      entryPoints:
+        - web
+      service: service-npm-37
+      middlewares:
+        - websocket-headers
+    router-npm-40:
+      rule: "Host(`pro.ethanh.online`) || Host(`pro.ethan-herring.com`)"
+      entryPoints:
+        - web
+      service: service-npm-40
+    router-npm-48:
+      rule: "Host(`print.ethan-herring.com`) || Host(`print.ethanh.online`)"
+      entryPoints:
+        - web
+      service: service-npm-48
+    router-npm-58:
+      rule: "Host(`sure.ethanh.online`) || Host(`sure.ethan-herring.com`)"
+      entryPoints:
+        - web
+      service: service-npm-58
+      middlewares:
+        - websocket-headers
+    router-npm-61:
+      rule: "Host(`cups.ethanh.online`) || Host(`cups.ethan-herring.com`)"
+      entryPoints:
+        - web
+      service: service-npm-61
+    router-npm-62:
+      rule: "Host(`label.ethanh.online`) || Host(`label.ethan-herring.com`)"
+      entryPoints:
+        - web
+      service: service-npm-62
+    router-npm-65:
+      rule: "Host(`dash.ethanh.online`) || Host(`dash.ethan-herring.com`)"
+      entryPoints:
+        - web
+      service: service-npm-65
+      middlewares:
+        - websocket-headers
+    router-npm-69:
+      rule: "Host(`registry.ethanh.online`) || Host(`registry.ethan-herring.com`)"
+      entryPoints:
+        - web
+      service: service-npm-69
+    router-npm-74:
+      rule: "Host(`work-dash.ethan-herring.com`) || Host(`work-dash.ethanh.online`)"
+      entryPoints:
+        - web
+      service: service-npm-74
+      middlewares:
+        - websocket-headers
+    router-npm-83:
+      rule: "Host(`registry-manager.ethanh.online`) || Host(`registry-manager.ethan-herring.com`)"
+      entryPoints:
+        - web
+      service: service-npm-83
+    router-npm-85:
+      rule: "Host(`dbgate.ethanh.online`) || Host(`dbgate.ethan-herring.com`)"
+      entryPoints:
+        - web
+      service: service-npm-85
+      middlewares:
+        - websocket-headers
+    router-npm-87:
+      rule: "Host(`nextcloud.ethan-herring.com`) || Host(`nextcloud.ethanh.online`)"
+      entryPoints:
+        - web
+      service: service-npm-87
+      middlewares:
+        - websocket-headers
+    router-npm-92:
+      rule: "Host(`sb.ethanh.online`)"
+      entryPoints:
+        - web
+      service: service-npm-92
+      middlewares:
+        - websocket-headers
+    router-npm-93:
+      rule: "Host(`cock.ethan-herring.com`)"
+      entryPoints:
+        - web
+      service: service-npm-93
+      middlewares:
+        - websocket-headers
+    router-npm-94:
+      rule: "Host(`memo.ethan-herring.com`)"
+      entryPoints:
+        - web
+      service: service-npm-94
+      middlewares:
+        - websocket-headers
+    router-npm-96:
+      rule: "Host(`spotify.ethanh.online`)"
+      entryPoints:
+        - web
+      service: service-npm-96
+    router-npm-97:
+      rule: "Host(`spotify-api.ethanh.online`)"
+      entryPoints:
+        - web
+      service: service-npm-97
+    router-npm-98:
+      rule: "Host(`obsidian.ethanh.online`) || Host(`obsidian.ethan-herring.com`)"
+      entryPoints:
+        - web
+      service: service-npm-98
+  services:
+    service-npm-1:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: http://actualbudget:5006
+    service-npm-2:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: http://jellyfin:8096
+    service-npm-3:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: http://immich_server:2283
+    service-npm-7:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: http://192.168.1.113:8123
+    service-npm-8:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: http://jellyseerr:5055
+    service-npm-10:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: http://stash:9999
+    service-npm-12:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: http://gluetun:8080
+    service-npm-13:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: http://gluetun:9696
+    service-npm-14:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: http://sonarr:8989
+    service-npm-15:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: http://radarr:7878
+    service-npm-16:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: http://lidarr:8686
+    service-npm-17:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: http://gluetun:6969
+    service-npm-19:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: http://lazylibrarian:5299
+    service-npm-21:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: http://192.168.1.113:61208
+    service-npm-22:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: http://kopia_backup:51515
+    service-npm-23:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: http://homepage:3000
+    service-npm-26:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: http://homebox:7745
+    service-npm-27:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: http://portainer:9000
+    service-npm-29:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: http://grafana:3000
+    service-npm-32:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: http://paperless:8000
+    service-npm-37:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: http://trilium:8080
+    service-npm-40:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: http://prometheus:9090
+    service-npm-48:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: https://192.168.1.158:443
+    service-npm-58:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: http://sure-budgeting-web-1:3000
+    service-npm-61:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: http://192.168.1.113:631
+    service-npm-62:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: http://192.168.1.113:8899
+    service-npm-65:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: http://192.168.1.102:3020
+    service-npm-69:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: http://192.168.1.185:5000
+    service-npm-74:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: http://192.168.1.187:8340
+    service-npm-83:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: http://192.168.1.185:5001
+    service-npm-85:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: http://192.168.1.185:5002
+    service-npm-87:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: http://192.168.1.185:11000
+    service-npm-92:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: http://192.168.1.185:3000
+    service-npm-93:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: https://192.168.1.113:9090
+    service-npm-94:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: http://192.168.1.185:5230
+    service-npm-96:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: http://web:3000
+    service-npm-97:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: http://server:8080
+    service-npm-98:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: http://obsidian-livesync-couchdb:5984
+  middlewares:
+    websocket-headers:
+      headers:
+        customRequestHeaders:
+          X-Forwarded-Proto: http

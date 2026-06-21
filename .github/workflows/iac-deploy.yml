@@ -1,0 +1,78 @@
+name: IaC Deploy
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '**/docker-compose.yml'
+      - '**/*.sops.env'
+      - '**/.env.sops'
+      - '**/.env.sops.yml'
+      - '**/.env.sops.yaml'
+      - 'scripts/**'
+      - '.sops.yaml'
+  workflow_dispatch:
+    inputs:
+      base_ref:
+        description: Git ref to diff from
+        required: false
+      head_ref:
+        description: Git ref to deploy
+        required: false
+        default: HEAD
+
+permissions:
+  contents: read
+
+concurrency:
+  group: homelab-iac-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on:
+      - self-hosted
+      - linux
+      - homelab
+      - docker
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6.0.3
+        with:
+          fetch-depth: 0
+
+      - name: Install SOPS
+        env:
+          SOPS_VERSION: v3.13.1
+        run: |
+          mkdir -p "$RUNNER_TEMP/bin"
+          curl -fsSL "https://github.com/getsops/sops/releases/download/${SOPS_VERSION}/sops-${SOPS_VERSION}.linux.amd64" -o "$RUNNER_TEMP/bin/sops"
+          chmod +x "$RUNNER_TEMP/bin/sops"
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+
+      - name: Resolve deploy range
+        id: refs
+        env:
+          EVENT_BEFORE: ${{ github.event.before }}
+          EVENT_SHA: ${{ github.sha }}
+          INPUT_BASE: ${{ github.event.inputs.base_ref }}
+          INPUT_HEAD: ${{ github.event.inputs.head_ref }}
+        run: |
+          head_ref="${INPUT_HEAD:-$EVENT_SHA}"
+          base_ref="${INPUT_BASE:-$EVENT_BEFORE}"
+          if [[ -z "$base_ref" || "$base_ref" =~ ^0+$ ]]; then
+            base_ref="$(git rev-parse "${head_ref}^")"
+          fi
+          echo "base_ref=$base_ref" >> "$GITHUB_OUTPUT"
+          echo "head_ref=$head_ref" >> "$GITHUB_OUTPUT"
+
+      - name: Validate Compose stacks
+        run: |
+          ./scripts/iac-validate.sh
+
+      - name: Deploy changed stacks
+        env:
+          SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
+        run: |
+          ./scripts/iac-deploy-changed.sh "${{ steps.refs.outputs.base_ref }}" "${{ steps.refs.outputs.head_ref }}"

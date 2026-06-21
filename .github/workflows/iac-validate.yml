@@ -1,0 +1,56 @@
+name: IaC Validate
+
+on:
+  pull_request:
+    paths:
+      - '**/docker-compose.yml'
+      - '.github/workflows/iac-validate.yml'
+      - 'renovate.json5'
+      - '.sops.yaml'
+      - 'scripts/**'
+      - 'tests/**'
+  push:
+    branches:
+      - main
+    paths:
+      - '**/docker-compose.yml'
+      - '.github/workflows/iac-validate.yml'
+      - 'renovate.json5'
+      - '.sops.yaml'
+      - 'scripts/**'
+      - 'tests/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on:
+      - self-hosted
+      - linux
+      - homelab
+      - docker
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6.0.3
+
+      - name: Check shell syntax
+        run: |
+          find scripts tests -type f -name '*.sh' -print0 | xargs -0 -r bash -n
+
+      - name: Run IaC tests
+        run: |
+          ./tests/test-iac-scripts.sh
+
+      - name: Validate Compose stacks
+        run: |
+          ./scripts/iac-validate.sh
+
+      - name: Prevent tracked plaintext env files
+        run: |
+          if git ls-files | grep -E '(^|/)(\.env|secrets\.ya?ml)$'; then
+            echo 'Plaintext secret-bearing files are tracked.' >&2
+            exit 1
+          fi

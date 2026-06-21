@@ -1,0 +1,3 @@
+creation_rules:
+  - path_regex: '(^|/)(\.env\.sops(\.ya?ml)?|.*\.sops\.env)$'
+    age: 'age1jpept4elwjhk4k80ce2pkz2mt9pf892km3rdudzjphxpg2jsrayqudxad0'

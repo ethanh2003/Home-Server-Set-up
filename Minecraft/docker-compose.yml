@@ -25,7 +25,7 @@ services:
       
       # RCON Configuration
       - ENABLE_RCON=true
-      - RCON_PASSWORD=minecraft
+      - RCON_PASSWORD=${RCON_PASSWORD}
       
       # Startup Commands
       - Gamerules="keepInventory=true"

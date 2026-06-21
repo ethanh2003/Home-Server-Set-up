@@ -1,0 +1,70 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    ":semanticCommits"
+  ],
+  "timezone": "America/Chicago",
+  "minimumReleaseAge": "7 days",
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 2,
+  "labels": [
+    "dependencies"
+  ],
+  "enabledManagers": [
+    "docker-compose",
+    "dockerfile",
+    "github-actions"
+  ],
+  "packageRules": [
+    {
+      "description": "Delay all container image updates for the homelab cooldown window.",
+      "matchDatasources": [
+        "docker"
+      ],
+      "minimumReleaseAge": "7 days",
+      "pinDigests": true
+    },
+    {
+      "description": "Automerge low-risk container updates after validation.",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchUpdateTypes": [
+        "digest",
+        "patch",
+        "minor"
+      ],
+      "automerge": true,
+      "automergeType": "pr",
+      "platformAutomerge": true
+    },
+    {
+      "description": "Require human review for major container updates.",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "automerge": false,
+      "dependencyDashboardApproval": true,
+      "labels": [
+        "dependencies",
+        "major-update"
+      ]
+    },
+    {
+      "description": "Keep automation updates visible but not automatically merged.",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "automerge": false,
+      "labels": [
+        "dependencies",
+        "github-actions"
+      ]
+    }
+  ]
+}

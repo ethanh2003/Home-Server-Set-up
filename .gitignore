@@ -28,6 +28,7 @@ temp/
 # Environment Variables & Secrets
 .env
 *.env
+!*.sops.env
 secrets.yaml
 *.key
 *.pem
@@ -42,6 +43,7 @@ id_ecdsa*
 rclone_backup.log
 sftp/host_keys/
 sftp/sftpgo_backup/
+home-assistant/backups/
 
 # Database Files
 *.db
@@ -63,3 +65,4 @@ __pycache__/
 */.cache/
 .gemini/
 gha-creds-*.json
+github-runner/runner_work/

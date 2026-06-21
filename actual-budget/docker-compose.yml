@@ -27,7 +27,7 @@ services:
     image: seriouslag/actual-auto-sync:latest
     environment:
     - ACTUAL_SERVER_URL=http://actualbudget:5006
-    - ACTUAL_SERVER_PASSWORD=Eherring1
+    - ACTUAL_SERVER_PASSWORD=${ACTUAL_SERVER_PASSWORD}
     - CRON_SCHEDULE=0 */12 * * *
     - RUN_ON_START=true
     - LOG_LEVEL=info
@@ -39,4 +39,3 @@ services:
           memory: 256M
     networks:
     - proxy_net
-
