@@ -14,4 +14,5 @@ services:
       RUNNER_ALLOW_RUNASROOT: "1"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - /home/ethan/docker:/home/ethan/docker
       - ./runner_work:/home/runner/_work

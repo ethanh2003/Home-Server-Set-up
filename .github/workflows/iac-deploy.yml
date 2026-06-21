@@ -11,6 +11,7 @@ on:
       - '**/.env.sops.yml'
       - '**/.env.sops.yaml'
       - 'github-runner/**'
+      - '.github/workflows/iac-deploy.yml'
       - 'scripts/**'
       - '.sops.yaml'
   workflow_dispatch:
@@ -37,6 +38,8 @@ jobs:
       - linux
       - homelab
       - docker
+    env:
+      HOMELAB_IAC_ROOT: /home/ethan/docker
     steps:
       - name: Checkout
         uses: actions/checkout@v6.0.3
@@ -68,18 +71,33 @@ jobs:
           echo "base_ref=$base_ref" >> "$GITHUB_OUTPUT"
           echo "head_ref=$head_ref" >> "$GITHUB_OUTPUT"
 
+      - name: Verify live deploy root
+        run: |
+          test -d "$HOMELAB_IAC_ROOT/.git"
+          live_head="$(git -C "$HOMELAB_IAC_ROOT" rev-parse HEAD)"
+          target_head="$(git rev-parse "${{ steps.refs.outputs.head_ref }}")"
+          if [[ "$live_head" != "$target_head" ]]; then
+            echo "Live deploy root $HOMELAB_IAC_ROOT is at $live_head, expected $target_head." >&2
+            echo "Fast-forward the live checkout before deploying." >&2
+            exit 1
+          fi
+
       - name: Decrypt encrypted env files
         env:
+          IAC_REPO_ROOT: ${{ env.HOMELAB_IAC_ROOT }}
           SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
         run: |
           ./scripts/secrets-decrypt.sh
 
       - name: Validate Compose stacks
+        env:
+          IAC_REPO_ROOT: ${{ env.HOMELAB_IAC_ROOT }}
         run: |
           ./scripts/iac-validate.sh
 
       - name: Deploy changed stacks
         env:
+          IAC_REPO_ROOT: ${{ env.HOMELAB_IAC_ROOT }}
           SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
         run: |
           ./scripts/iac-deploy-changed.sh "${{ steps.refs.outputs.base_ref }}" "${{ steps.refs.outputs.head_ref }}"
