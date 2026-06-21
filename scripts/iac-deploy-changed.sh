@@ -22,6 +22,11 @@ fi
 iac_ensure_proxy_net
 
 for stack in "${stacks[@]}"; do
+  if [[ "${GITHUB_ACTIONS:-}" == "true" && "$stack" == "github-runner" ]]; then
+    printf 'Skipping %s during GitHub Actions deploy to avoid restarting the active runner.\n' "$stack"
+    continue
+  fi
+
   stack_dir="$root/$stack"
   printf 'Deploying %s\n' "$stack"
 
