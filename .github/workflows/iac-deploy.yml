@@ -10,6 +10,7 @@ on:
       - '**/.env.sops'
       - '**/.env.sops.yml'
       - '**/.env.sops.yaml'
+      - 'github-runner/**'
       - 'scripts/**'
       - '.sops.yaml'
   workflow_dispatch:
@@ -66,6 +67,12 @@ jobs:
           fi
           echo "base_ref=$base_ref" >> "$GITHUB_OUTPUT"
           echo "head_ref=$head_ref" >> "$GITHUB_OUTPUT"
+
+      - name: Decrypt encrypted env files
+        env:
+          SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
+        run: |
+          ./scripts/secrets-decrypt.sh
 
       - name: Validate Compose stacks
         run: |

@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - '**/docker-compose.yml'
+      - 'github-runner/**'
       - '.github/workflows/iac-validate.yml'
       - 'renovate.json5'
       - '.sops.yaml'
@@ -14,6 +15,7 @@ on:
       - main
     paths:
       - '**/docker-compose.yml'
+      - 'github-runner/**'
       - '.github/workflows/iac-validate.yml'
       - 'renovate.json5'
       - '.sops.yaml'
@@ -36,6 +38,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6.0.3
 
+      - name: Install SOPS
+        env:
+          SOPS_VERSION: v3.13.1
+        run: |
+          mkdir -p "$RUNNER_TEMP/bin"
+          curl -fsSL "https://github.com/getsops/sops/releases/download/${SOPS_VERSION}/sops-${SOPS_VERSION}.linux.amd64" -o "$RUNNER_TEMP/bin/sops"
+          chmod +x "$RUNNER_TEMP/bin/sops"
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+
       - name: Check shell syntax
         run: |
           find scripts tests -type f -name '*.sh' -print0 | xargs -0 -r bash -n
@@ -43,6 +54,12 @@ jobs:
       - name: Run IaC tests
         run: |
           ./tests/test-iac-scripts.sh
+
+      - name: Decrypt encrypted env files
+        env:
+          SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
+        run: |
+          ./scripts/secrets-decrypt.sh
 
       - name: Validate Compose stacks
         run: |
