@@ -28,28 +28,52 @@ permissions:
 
 jobs:
   wiki-sync:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on:
       - self-hosted
       - linux
       - homelab
       - docker
+    env:
+      HOMELAB_IAC_ROOT: /home/ethan/docker
     steps:
       - name: Checkout
         uses: actions/checkout@v6.0.3
         with:
           fetch-depth: 0
 
+      - name: Verify live wiki root
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          test -d "$HOMELAB_IAC_ROOT/.git"
+          git config --global --add safe.directory "$HOMELAB_IAC_ROOT"
+          live_head="$(git -C "$HOMELAB_IAC_ROOT" rev-parse HEAD)"
+          if [[ "$live_head" != "$GITHUB_SHA" ]]; then
+            echo "Live wiki root $HOMELAB_IAC_ROOT is at $live_head, expected $GITHUB_SHA." >&2
+            echo "Fast-forward the live checkout before publishing wiki content." >&2
+            exit 1
+          fi
+
       - name: Test wiki sync generator
         run: |
           python3 tests/test-wiki-sync.py
 
       - name: Check generated wiki content
+        if: github.event_name != 'push' || github.ref != 'refs/heads/main'
+        run: |
+          ./scripts/wiki-sync.sh --check
+
+      - name: Check generated wiki content from live root
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          IAC_REPO_ROOT: ${{ env.HOMELAB_IAC_ROOT }}
         run: |
           ./scripts/wiki-sync.sh --check
 
       - name: Publish wiki content
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
+          IAC_REPO_ROOT: ${{ env.HOMELAB_IAC_ROOT }}
           WIKIJS_URL: https://wiki.ethan-herring.com
           WIKIJS_API_TOKEN: ${{ secrets.WIKIJS_API_TOKEN }}
         run: |

@@ -259,7 +259,8 @@ def history_slug(path: Path) -> str:
 
 def generate_history_pages(root: Path) -> list[Page]:
     pages: list[Page] = []
-    log = run_git(root, ["log", "--date=short", "--pretty=format:%ad %h %s", "--max-count=80"])
+    log_ref = "HEAD^" if run_git(root, ["rev-parse", "--verify", "HEAD^"]).strip() else "HEAD"
+    log = run_git(root, ["log", log_ref, "--date=short", "--pretty=format:%ad %h %s", "--max-count=80"])
     if log:
         content = page_header("Git History") + "```text\n" + redact(log) + "\n```\n"
         pages.append(Page(Path("homelab/history/git-history.md"), "Git History", content))
@@ -287,7 +288,6 @@ def generate_history_pages(root: Path) -> list[Page]:
 
 
 def generate_migration_gaps(root: Path, stacks: list[Path]) -> Page:
-    status = run_git(root, ["status", "--short", "--", ".", ":(exclude)wiki/content"])
     lines = [
         page_header("Migration Gaps"),
         "## Stack IaC Coverage",
@@ -313,8 +313,19 @@ def generate_migration_gaps(root: Path, stacks: list[Path]) -> Page:
             "",
             "## Dirty Worktree Snapshot",
             "",
+            "Committed wiki content omits raw dirty-status output so `wiki-sync --check` is reproducible.",
+            "Check live drift from the IaC root with:",
+            "",
+            "```bash",
+            "git status --short -- . ':(exclude)wiki/content'",
+            "```",
+            "",
+            "Current generated-live status:",
+            "",
             "```text",
-            redact(status.strip() or "clean"),
+            redact(run_git(root, ["status", "--short", "--", ".", ":(exclude)wiki/content"]).strip() or "clean")
+            if os.environ.get("WIKI_SYNC_INCLUDE_DIRTY") == "1"
+            else "omitted; set WIKI_SYNC_INCLUDE_DIRTY=1 for an ad hoc live snapshot",
             "```",
             "",
         ]

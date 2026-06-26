@@ -7,6 +7,7 @@ source "$script_dir/lib/iac-common.sh"
 
 root="$(iac_repo_root)"
 target_stack=""
+repo_owner="$(stat -c '%u:%g' "$root")"
 
 if [[ "${1:-}" == "--stack" ]]; then
   target_stack="${2:-}"
@@ -59,5 +60,6 @@ for encrypted in "${encrypted_files[@]}"; do
     sops --decrypt "$encrypted" >"$tmp_output"
   fi
   install -m 0600 "$tmp_output" "$output"
+  chown "$repo_owner" "$output" 2>/dev/null || true
   rm -f "$tmp_output"
 done
