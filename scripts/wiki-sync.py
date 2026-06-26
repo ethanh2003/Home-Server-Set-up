@@ -259,8 +259,24 @@ def history_slug(path: Path) -> str:
 
 def generate_history_pages(root: Path) -> list[Page]:
     pages: list[Page] = []
+    log_ref = "HEAD"
+    content_commit = run_git(root, ["log", "--pretty=format:%H", "-1", "--", "wiki/content"]).strip()
+    if content_commit:
+        cutoff = content_commit
+        while True:
+            parent = run_git(root, ["rev-parse", "--verify", f"{cutoff}^"]).strip()
+            if not parent:
+                break
+            parent_changed = run_git(root, ["diff-tree", "--no-commit-id", "--name-only", "-r", parent]).splitlines()
+            if not any(path.startswith("wiki/content/") for path in parent_changed):
+                break
+            cutoff = parent
+        parent = run_git(root, ["rev-parse", "--verify", f"{cutoff}^"]).strip()
+        if parent:
+            log_ref = parent
+
     log_lines: list[str] = []
-    for commit in run_git(root, ["log", "--pretty=format:%H", "--max-count=160"]).splitlines():
+    for commit in run_git(root, ["log", log_ref, "--pretty=format:%H", "--max-count=160"]).splitlines():
         changed = run_git(root, ["diff-tree", "--no-commit-id", "--name-only", "-r", commit]).splitlines()
         if any(path.startswith("wiki/content/") for path in changed):
             continue
