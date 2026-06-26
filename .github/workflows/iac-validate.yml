@@ -42,6 +42,10 @@ jobs:
         env:
           SOPS_VERSION: v3.13.1
         run: |
+          if command -v sops >/dev/null 2>&1; then
+            sops --version
+            exit 0
+          fi
           mkdir -p "$RUNNER_TEMP/bin"
           curl -fsSL "https://github.com/getsops/sops/releases/download/${SOPS_VERSION}/sops-${SOPS_VERSION}.linux.amd64" -o "$RUNNER_TEMP/bin/sops"
           chmod +x "$RUNNER_TEMP/bin/sops"
