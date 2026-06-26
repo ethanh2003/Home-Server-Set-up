@@ -1,0 +1,13 @@
+http:
+  routers:
+    wikijs:
+      rule: "Host(`wiki.ethan-herring.com`) || Host(`wiki.pup-percy.com`) || Host(`wiki.ethanh.online`)"
+      entryPoints:
+        - web
+      service: wikijs
+  services:
+    wikijs:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: http://wikijs:3000

@@ -1,3 +1,7 @@
+# GEMINI.md
+
+> Generated from `/home/ethan/docker`. Edit the Git source, then run wiki sync.
+
 # Gemini Context: Self-Hosted Homelab
 
 This document serves as the primary context and instruction manual for Gemini when interacting with this project. It outlines the architecture, hardware constraints, storage topology, and workflows of the self-hosted homelab.
@@ -86,7 +90,7 @@ The project follows a **"One Folder Per Stack"** architecture.
 2.  **Define Compose:** Create `docker-compose.yml`.
 3.  **Network:** Add to `proxy_net` if web-accessible.
 4.  **Persistence:** Map volumes to `./config/[service_name]`.
-5.  **Secrets:** Use `.env` for sensitive data.
+5.  **Secrets: [REDACTED] Use `.env` for sensitive data.
 
 ### 3. Backups
 *   **Database Dumps:** Run `./backup_databases.sh`. This dumps Postgres databases from containers like `immich_postgres` and `planka-postgres` to `.db_dumps/`.

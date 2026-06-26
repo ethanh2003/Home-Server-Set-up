@@ -1,3 +1,7 @@
+# STACKS_GEMINI.md
+
+> Generated from `/home/ethan/docker`. Edit the Git source, then run wiki sync.
+
 # Gemini Context: Homelab Architecture & Docker Stacks
 
 **Role:** Expert System Context for Homelab Administration.

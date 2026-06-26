@@ -1,0 +1,55 @@
+services:
+  wiki-db:
+    image: postgres:16-alpine
+    container_name: wiki-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: wiki
+      POSTGRES_USER: wikijs
+      POSTGRES_PASSWORD: ${WIKI_DB_PASSWORD:-change-me}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wikijs -d wiki"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+    networks:
+      - wiki_internal
+
+  wikijs:
+    image: ghcr.io/requarks/wiki:2
+    container_name: wikijs
+    restart: unless-stopped
+    depends_on:
+      wiki-db:
+        condition: service_healthy
+    environment:
+      DB_TYPE: postgres
+      DB_HOST: wiki-db
+      DB_PORT: 5432
+      DB_USER: wikijs
+      DB_PASS: ${WIKI_DB_PASSWORD:-change-me}
+      DB_NAME: wiki
+    networks:
+      - proxy_net
+      - wiki_internal
+
+  wiki-mcp:
+    image: ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+    container_name: wiki-mcp
+    restart: "no"
+    profiles:
+      - mcp
+    environment:
+      WIKIJS_URL: ${WIKIJS_URL:-https://wiki.ethan-herring.com}
+      WIKIJS_API_KEY: ${WIKIJS_API_TOKEN:-SET_AFTER_FIRST_LOGIN}
+    command: ["uvx", "wikijs-mcp"]
+    networks:
+      - proxy_net
+
+networks:
+  proxy_net:
+    external: true
+  wiki_internal:
+    internal: true

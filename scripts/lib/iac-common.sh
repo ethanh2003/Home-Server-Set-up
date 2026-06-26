@@ -28,12 +28,15 @@ iac_stack_name() {
 iac_compose_env_args() {
   local stack_dir="$1"
 
-  if [[ -f "$stack_dir/.env" ]]; then
+  if [[ -r "$stack_dir/.env" ]]; then
     printf '%s\n' "--env-file"
     printf '%s\n' "$stack_dir/.env"
-  elif [[ -f "$stack_dir/.env.example" ]]; then
+  elif [[ -r "$stack_dir/.env.example" ]]; then
     printf '%s\n' "--env-file"
     printf '%s\n' "$stack_dir/.env.example"
+  elif [[ -e "$stack_dir/.env" ]]; then
+    printf '%s\n' "--env-file"
+    printf '%s\n' "/dev/null"
   fi
 }
 

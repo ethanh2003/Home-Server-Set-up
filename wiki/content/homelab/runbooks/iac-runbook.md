@@ -1,3 +1,7 @@
+# docs/iac-runbook.md
+
+> Generated from `/home/ethan/docker`. Edit the Git source, then run wiki sync.
+
 # Homelab IaC Runbook
 
 This repo treats `/home/ethan/docker` as the declarative source for Docker Compose stacks. Compose files, examples, scripts, workflows, and encrypted secret files are tracked. Plain `.env` files, config directories, databases, logs, backups, and generated runtime data stay untracked.
@@ -46,7 +50,7 @@ Use:
 Publishing to Wiki.js requires a Wiki.js API token:
 
 ```bash
-WIKIJS_API_TOKEN=... ./scripts/wiki-sync.sh --backfill --publish
+WIKIJS_API_TOKEN=[REDACTED] ./scripts/wiki-sync.sh --backfill --publish
 ```
 
 GitHub Actions runs the wiki sync check on docs, Compose, workflow, and script

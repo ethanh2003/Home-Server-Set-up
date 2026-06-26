@@ -66,3 +66,4 @@ __pycache__/
 .gemini/
 gha-creds-*.json
 github-runner/runner_work/
+wiki/postgres-data/

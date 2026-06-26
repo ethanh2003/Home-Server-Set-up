@@ -1,3 +1,7 @@
+# docs/traefik-migration.md
+
+> Generated from `/home/ethan/docker`. Edit the Git source, then run wiki sync.
+
 # NPM to Traefik Migration
 
 Traefik is the long-term IaC reverse proxy. Nginx Proxy Manager remains the rollback path until Cloudflared is moved and routes are verified.

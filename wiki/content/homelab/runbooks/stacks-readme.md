@@ -1,3 +1,7 @@
+# STACKS_README.md
+
+> Generated from `/home/ethan/docker`. Edit the Git source, then run wiki sync.
+
 # Docker Compose Stacks
 
 `/home/ethan/docker` is the homelab infrastructure-as-code root. Each active
