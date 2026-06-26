@@ -259,8 +259,17 @@ def history_slug(path: Path) -> str:
 
 def generate_history_pages(root: Path) -> list[Page]:
     pages: list[Page] = []
-    log_ref = "HEAD^" if run_git(root, ["rev-parse", "--verify", "HEAD^"]).strip() else "HEAD"
-    log = run_git(root, ["log", log_ref, "--date=short", "--pretty=format:%ad %h %s", "--max-count=80"])
+    log_lines: list[str] = []
+    for commit in run_git(root, ["log", "--pretty=format:%H", "--max-count=160"]).splitlines():
+        changed = run_git(root, ["diff-tree", "--no-commit-id", "--name-only", "-r", commit]).splitlines()
+        if any(path.startswith("wiki/content/") for path in changed):
+            continue
+        line = run_git(root, ["show", "-s", "--date=short", "--pretty=format:%ad %h %s", commit]).strip()
+        if line:
+            log_lines.append(line)
+        if len(log_lines) >= 80:
+            break
+    log = "\n".join(log_lines)
     if log:
         content = page_header("Git History") + "```text\n" + redact(log) + "\n```\n"
         pages.append(Page(Path("homelab/history/git-history.md"), "Git History", content))
