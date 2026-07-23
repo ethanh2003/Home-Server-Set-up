@@ -160,11 +160,10 @@ Run:
 
 ```bash
 git -C /home/ethan/docker add \
-  frigate/config/config.yml \
   frigate/docker-compose.yml \
   frigate/docs/superpowers/plans/2026-07-23-frigate-resource-limits.md
 git -C /home/ethan/docker diff --cached --check
 git -C /home/ethan/docker commit -m "ops: bound Frigate resource usage"
 ```
 
-Expected: the commit contains only the two Frigate configuration files and this plan. The Obsidian note is verified separately because it belongs to the mounted Windows vault.
+Expected: the commit contains only the secret-free Frigate Compose file and this plan. `frigate/config/config.yml` remains ignored and uncommitted because it contains camera credentials. The Obsidian note is verified separately because it belongs to the mounted Windows vault.
