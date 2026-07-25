@@ -56,7 +56,7 @@ proxy_hosts:
     forward_host: immich_server
     forward_port: 2283
     enabled: true
-    ssl_forced: true
+    ssl_forced: false
     http2_support: true
     websocket: false
     certificate_id: 4
@@ -185,6 +185,19 @@ proxy_hosts:
     websocket: false
     certificate_id: 4
     advanced_config: ""
+  - id: 111
+    domains:
+      - calibre.ethanh.online
+      - calibre.ethan-herring.com
+    forward_scheme: http
+    forward_host: calibre-web-automated
+    forward_port: 8083
+    enabled: true
+    ssl_forced: true
+    http2_support: true
+    websocket: false
+    certificate_id: 4
+    advanced_config: ""
   - id: 21
     domains:
       - glances.ethanh.online
@@ -304,7 +317,7 @@ proxy_hosts:
       - print.ethan-herring.com
       - print.ethanh.online
     forward_scheme: https
-    forward_host: 192.168.1.158
+    forward_host: 192.168.1.146
     forward_port: 443
     enabled: true
     ssl_forced: true

@@ -6,9 +6,29 @@
 ## IaC Status
 
 - Compose file: `linkstack/compose.yml`
-- Compose tracked in Git: no
+- Compose tracked in Git: yes
 - Has SOPS env: no
 - README: no
+
+## Project Status
+
+- Runtime: running
+- Project status: needs docs
+- Last verified: 2026-07-04
+
+## Remaining Tasks
+
+- Normalize the stack into the broader IaC model and document public hardening settings.
+- Add a stack README/runbook with purpose, endpoints, backup/restore notes, and common commands.
+
+## Evidence
+
+- Compose file: `linkstack/compose.yml`
+- Compose tracked in Git: yes
+- README: no
+- SOPS env: no
+- Git status for stack path: clean
+- `linkstack`: running (healthy)
 
 ## Services
 

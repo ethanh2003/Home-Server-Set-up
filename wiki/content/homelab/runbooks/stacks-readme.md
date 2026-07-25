@@ -26,6 +26,7 @@ Plain `.env` files are runtime artifacts and must not be committed.
 | `actual-budget/` | Actual Budget and sync helper | SOPS env present. |
 | `arr-suite/` | Gluetun, qBittorrent, Prowlarr, Radarr, Sonarr | Preserve VPN routing through `gluetun`. |
 | `cloudflared/` | Cloudflare Tunnel public ingress | SOPS env present; NPM may still be live during transition. |
+| `ebooks/` | Calibre-Web Automated and LazyLibrarian for ebook library management | NPM routes for Calibre and LazyLibrarian; preserves `/mnt/data_14tb/media/books`. |
 | `github-runner/` | Self-hosted GitHub Actions runner | Privileged Docker socket access. |
 | `glances/` | System monitoring | No secrets expected. |
 | `home-assistant/` | Home Assistant, Mosquitto, Ring MQTT, Matter | Has dedicated docs and backup scripts. |

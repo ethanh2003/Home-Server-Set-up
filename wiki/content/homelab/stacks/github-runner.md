@@ -10,6 +10,26 @@
 - Has SOPS env: no
 - README: no
 
+## Project Status
+
+- Runtime: running
+- Project status: needs docs
+- Last verified: 2026-07-04
+
+## Remaining Tasks
+
+- Add a stack README/runbook with purpose, endpoints, backup/restore notes, and common commands.
+- Review whether runtime secrets need SOPS; if not, document why SOPS is unnecessary.
+
+## Evidence
+
+- Compose file: `github-runner/docker-compose.yml`
+- Compose tracked in Git: yes
+- README: no
+- SOPS env: no
+- Git status for stack path: clean
+- `github-runner`: running
+
 ## Services
 
 - `github-runner`

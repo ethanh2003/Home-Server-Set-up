@@ -10,6 +10,31 @@
 - Has SOPS env: yes
 - README: no
 
+## Project Status
+
+- Runtime: running
+- Project status: needs docs
+- Last verified: 2026-07-04
+
+## Remaining Tasks
+
+- Add a stack README/runbook with purpose, endpoints, backup/restore notes, and common commands.
+
+## Evidence
+
+- Compose file: `monitoring-stack/docker-compose.yml`
+- Compose tracked in Git: yes
+- README: no
+- SOPS env: yes
+- Git status for stack path: clean
+- `blackbox-exporter`: running
+- `cadvisor`: running (healthy)
+- `grafana`: running (healthy)
+- `loki`: running
+- `node-exporter`: running
+- `prometheus`: running (healthy)
+- `promtail`: running
+
 ## Services
 
 - `prometheus`
@@ -18,6 +43,7 @@
 - `cadvisor`
 - `loki`
 - `promtail`
+- `blackbox-exporter`
 
 ## Images
 
@@ -25,6 +51,7 @@
 - `grafana/grafana-oss:latest`
 - `grafana/loki:latest`
 - `grafana/promtail:latest`
+- `prom/blackbox-exporter:latest`
 - `prom/node-exporter:latest`
 - `prom/prometheus:latest`
 

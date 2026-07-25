@@ -16,6 +16,8 @@ from pathlib import Path
 
 CONTENT_ROOT = Path("wiki/content")
 WIKI_HOSTS = ["wiki.ethan-herring.com", "wiki.pup-percy.com", "wiki.ethanh.online"]
+STATUS_VERIFIED_DATE = os.environ.get("HOMELAB_STATUS_VERIFIED_DATE", "2026-07-04")
+ADJACENT_PROJECT_NAMES = ["obsidian-api-mcp", "arr-multi-user", "chicago-dashboard", "dymo-label"]
 SECRET_PATTERNS = [
     re.compile(r"(?i)\b[A-Z0-9_-]*(?:PASSWORD|PASS|TOKEN|SECRET|API[_-]?KEY|PRIVATE[_-]?KEY)[A-Z0-9_-]*\b\s*[:=]\s*[^\s`'\"]+"),
     re.compile(r"(?i)(bearer\s+)[A-Za-z0-9._~+/=-]+"),
@@ -38,6 +40,17 @@ class Page:
 class GenerateResult:
     root: Path
     pages: list[Page]
+
+
+@dataclasses.dataclass(frozen=True)
+class ProjectStatus:
+    name: str
+    kind: str
+    path: str
+    runtime: str
+    project_status: str
+    remaining_tasks: list[str]
+    evidence: list[str]
 
 
 def repo_root() -> Path:
@@ -133,8 +146,297 @@ def image_names(compose_text: str) -> list[str]:
     return sorted(set(re.findall(r"^\s*image:\s*([^\s#]+)", compose_text, flags=re.M)))
 
 
+def status_label(text: str) -> str:
+    return text.replace("|", "\\|")
+
+
+def compose_ps(root: Path, compose: Path | None) -> tuple[str, list[str]]:
+    if compose is None:
+        return "unknown", ["No Compose file found."]
+    try:
+        result = subprocess.run(
+            ["docker", "compose", "-f", str(compose), "ps", "--format", "{{.Service}}\t{{.State}}\t{{.Health}}"],
+            cwd=root,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            timeout=8,
+            check=False,
+        )
+        result.check_returncode()
+    except subprocess.CalledProcessError:
+        return "unknown", ["`docker compose ps` could not read this stack."]
+    except subprocess.TimeoutExpired:
+        return "unknown", ["`docker compose ps` timed out while reading this stack."]
+    rows = [line.strip() for line in result.stdout.splitlines() if line.strip()]
+    if not rows:
+        return "stopped", ["No services are currently listed by `docker compose ps`."]
+
+    service_states: list[tuple[str, str, str]] = []
+    for row in rows:
+        parts = row.split("\t")
+        service = parts[0] if len(parts) > 0 else "unknown"
+        state = parts[1] if len(parts) > 1 else "unknown"
+        health = parts[2] if len(parts) > 2 else ""
+        service_states.append((service, state, health))
+
+    non_running = [state for _, state, _ in service_states if state != "running"]
+    unhealthy = [health for _, _, health in service_states if health == "unhealthy"]
+    stopped_states = {"created", "dead", "exited", "removing"}
+    observed_states = {state for _, state, _ in service_states}
+    if not non_running and not unhealthy:
+        runtime = "running"
+    elif observed_states and observed_states <= stopped_states:
+        runtime = "stopped"
+    else:
+        runtime = "partial"
+    evidence = [f"`{service}`: {state}{f' ({health})' if health else ''}" for service, state, health in service_states]
+    return runtime, evidence
+
+
+def stack_git_status(root: Path, stack: Path) -> str:
+    status = run_git(root, ["status", "--short", "--", stack.name]).rstrip()
+    if not status:
+        return "clean"
+    states: set[str] = set()
+    worktree_states = {"M": "modified", "D": "deleted", "A": "added", "R": "renamed", "C": "copied", "U": "unmerged"}
+    for line in status.splitlines():
+        code = line[:2]
+        if code == "??":
+            states.add("untracked")
+            continue
+        if len(code) == 2 and code[1] in worktree_states:
+            states.add(worktree_states[code[1]])
+    return ", ".join(sorted(states)) if states else "clean"
+
+
+def known_stack_tasks(stack: str) -> list[str]:
+    tasks: dict[str, list[str]] = {
+        "traefik": [
+            "Complete Cloudflare cutover from NPM to Traefik after route parity is verified.",
+            "Keep NPM available as rollback until public ingress has been proven off-LAN.",
+        ],
+        "nginx-proxy-manager": [
+            "Keep as rollback during Traefik migration.",
+            "Reconcile generated proxy configs with the live SQLite database before disabling stale rows.",
+        ],
+        "spotify-stats": [
+            "Finish hardening large Your Spotify imports beyond the current cache and `/tmp/imports` fixes.",
+            "Decide whether the upstream checkout changes should become a local patch, fork, or discardable hotfix.",
+        ],
+        "obsidian-livesync": [
+            "Resolve the stale duplicate NPM row for `obsidian.ethan-herring.com` if it still exists.",
+            "Keep LiveSync replication separate from the always-on Obsidian API/MCP service.",
+        ],
+        "timemachine": [
+            "If remote Macs cannot route to `192.168.1.230`, advertise and approve a Tailscale route for `192.168.1.230/32`.",
+        ],
+        "home-assistant": [
+            "Keep backup, validation, deploy, restart, logs, and rollback helper docs aligned with the live scripts.",
+            "Maintain separate handling for the primary Home Assistant instance and `HomeAssistant2`.",
+        ],
+        "ebooks": [
+            "Finish first-run application configuration in Calibre-Web Automated and LazyLibrarian.",
+            "Verify StoryGraph watcher behavior after adding a real export CSV.",
+        ],
+        "arr-suite": [
+            "Keep dry-run-first acquisition workflows and approval artifacts for bulk Radarr changes.",
+            "Continue live queue verification before any Jellyfin collection or cleanup work.",
+        ],
+        "pingvin-share": [
+            "Review whether Pingvin settings should stay UI-managed or gain tracked documentation for each production setting.",
+        ],
+        "stash": [
+            "Add a stack README covering media roots, backups, scan behavior, and qBittorrent seeding constraints.",
+        ],
+        "linkstack": [
+            "Normalize the stack into the broader IaC model and document public hardening settings.",
+        ],
+    }
+    return tasks.get(stack, [])
+
+
+def stack_project_status(root: Path, stack_dir: Path) -> ProjectStatus:
+    stack = stack_dir.name
+    compose = compose_file(stack_dir)
+    compose_rel = compose.relative_to(root).as_posix() if compose else "missing"
+    compose_text = compose.read_text(encoding="utf-8", errors="replace") if compose else ""
+    readme = stack_dir / "README.md"
+    sops = (stack_dir / ".env.sops").exists() or any(stack_dir.glob("*.sops.env"))
+    tracked = is_tracked(root, compose.relative_to(root)) if compose else False
+    runtime, runtime_evidence = compose_ps(root, compose)
+    git_state = stack_git_status(root, stack_dir)
+
+    remaining = known_stack_tasks(stack)
+    if not tracked:
+        remaining.append("Review and either commit the stack into IaC or intentionally ignore it.")
+    if not readme.exists():
+        remaining.append("Add a stack README/runbook with purpose, endpoints, backup/restore notes, and common commands.")
+    has_env_shape = (stack_dir / ".env").exists() or (stack_dir / ".env.example").exists() or "${" in compose_text
+    if has_env_shape and not sops:
+        remaining.append("Review whether runtime secrets need SOPS; if not, document why SOPS is unnecessary.")
+    if runtime in {"partial", "stopped"}:
+        remaining.append("Inspect `docker compose ps` and service logs before marking the runtime operational.")
+    if not remaining:
+        remaining.append("Keep routine image updates, backups, and documentation current.")
+
+    if runtime in {"partial", "stopped"}:
+        project_status = "in progress"
+    elif not tracked:
+        project_status = "needs IaC cleanup"
+    elif not readme.exists():
+        project_status = "needs docs"
+    else:
+        project_status = "operational"
+    if stack in {"traefik", "spotify-stats", "ebooks"}:
+        project_status = "in progress"
+    if stack in {"nginx-proxy-manager", "linkstack", "stash", "obsidian-livesync"} and project_status == "operational":
+        project_status = "needs IaC cleanup"
+
+    evidence = [
+        f"Compose file: `{compose_rel}`",
+        f"Compose tracked in Git: {'yes' if tracked else 'no'}",
+        f"README: {'yes' if readme.exists() else 'no'}",
+        f"SOPS env: {'yes' if sops else 'no'}",
+        f"Git status for stack path: {git_state}",
+        *runtime_evidence,
+    ]
+    return ProjectStatus(
+        name=stack,
+        kind="stack",
+        path=f"/home/ethan/docker/{stack}",
+        runtime=runtime,
+        project_status=project_status,
+        remaining_tasks=remaining,
+        evidence=evidence,
+    )
+
+
+def adjacent_project_status(root: Path, name: str) -> ProjectStatus | None:
+    path = root.parent / name
+    if not path.exists():
+        return None
+    git_status = subprocess.run(
+        ["git", "-C", str(path), "status", "--short", "--branch"],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if git_status.returncode == 0:
+        git_summary = " ".join(line.strip() for line in git_status.stdout.splitlines()[:3]) or "clean"
+    else:
+        git_summary = "not a git repository"
+
+    config_files = [
+        rel
+        for rel in ("docker-compose.yml", "compose.yml", "package.json", "pyproject.toml", "AGENTS.md")
+        if (path / rel).exists()
+    ]
+    evidence = [f"Path: `{path}`", f"Git status: {git_summary}"]
+    if config_files:
+        evidence.append("Project files: " + ", ".join(f"`{rel}`" for rel in config_files))
+
+    if name == "obsidian-api-mcp":
+        return ProjectStatus(
+            name=name,
+            kind="adjacent repo",
+            path=str(path),
+            runtime="non-runtime",
+            project_status="operational",
+            remaining_tasks=[
+                "Keep the user systemd service and bearer-token setup documented with the Obsidian vault notes.",
+                "Do not treat this service as the LiveSync replication engine.",
+            ],
+            evidence=evidence,
+        )
+    if name == "arr-multi-user":
+        return ProjectStatus(
+            name=name,
+            kind="adjacent repo",
+            path=str(path),
+            runtime="non-runtime",
+            project_status="in progress",
+            remaining_tasks=[
+                "Create the initial repository commit once the current scaffold and submodule state are reviewed.",
+                "Finish the companion-app plan set and re-run the repository contract tests.",
+            ],
+            evidence=evidence,
+        )
+    if name == "chicago-dashboard":
+        return ProjectStatus(
+            name=name,
+            kind="adjacent repo",
+            path=str(path),
+            runtime="non-runtime",
+            project_status="in progress",
+            remaining_tasks=[
+                "Implement the remaining CTA, weather, calendar, ETA, preferences, and cross-plan consistency plans.",
+                "Review the local server/package changes and decide what belongs in Git.",
+            ],
+            evidence=evidence,
+        )
+    if name == "dymo-label":
+        return ProjectStatus(
+            name=name,
+            kind="adjacent app",
+            path=str(path),
+            runtime="unknown",
+            project_status="blocked",
+            remaining_tasks=[
+                "Initialize source control or explicitly document why the app remains outside Git.",
+                "Restore or recreate `frontend/src/stores/appStore`, `frontend/src/components/Login`, and `frontend/src/components/Editor` so the frontend build can compile.",
+            ],
+            evidence=evidence,
+        )
+    return None
+
+
+def collect_project_statuses(root: Path, stacks: list[Path]) -> list[ProjectStatus]:
+    statuses = [stack_project_status(root, stack) for stack in stacks]
+    statuses.extend(
+        status
+        for name in ADJACENT_PROJECT_NAMES
+        if (status := adjacent_project_status(root, name)) is not None
+    )
+    return sorted(statuses, key=lambda status: (status.kind != "stack", status.name.lower()))
+
+
 def page_header(title: str) -> str:
     return f"# {title}\n\n> Generated from `/home/ethan/docker`. Edit the Git source, then run wiki sync.\n\n"
+
+
+def generate_homepage(stacks: list[Path]) -> Page:
+    lines = [
+        page_header("Homelab Documentation"),
+        f"Last verified: {STATUS_VERIFIED_DATE}",
+        "",
+        "This Wiki.js site is the operational documentation entrypoint for the homelab.",
+        "",
+        "## Start Here",
+        "",
+        "- [Homelab Wiki](/homelab/index)",
+        "- [Project Status](/homelab/projects)",
+        "- [Migration Gaps](/homelab/migration-gaps)",
+        "- [Traefik Migration](/homelab/runbooks/traefik-migration)",
+        "- [IaC Runbook](/homelab/runbooks/iac-runbook)",
+        "",
+        "## Active Stacks",
+        "",
+    ]
+    lines.extend(f"- [{stack.name}](/homelab/stacks/{stack.name})" for stack in stacks)
+    lines.extend(
+        [
+            "",
+            "## Source Of Truth",
+            "",
+            "- Git repo: `/home/ethan/docker`",
+            "- Generated wiki source: `/home/ethan/docker/wiki/content`",
+            "- Publish command: `./scripts/wiki-sync.sh --backfill --publish`",
+            "",
+        ]
+    )
+    return Page(Path("home.md"), "Homelab Documentation", redact("\n".join(lines)))
 
 
 def generate_index(root: Path, stacks: list[Path]) -> Page:
@@ -150,6 +452,10 @@ def generate_index(root: Path, stacks: list[Path]) -> Page:
         "- Wiki content source: `wiki/content/`",
         "- Publish command: `./scripts/wiki-sync.sh --all --publish`",
         "- Focus stack command: `./scripts/wiki-sync.sh --stack <stack-name>`",
+        "",
+        "## Project Status",
+        "",
+        "- [Project Status](/homelab/projects)",
         "",
         "## Stacks",
         "",
@@ -170,8 +476,70 @@ def generate_index(root: Path, stacks: list[Path]) -> Page:
     return Page(Path("homelab/index.md"), "Homelab Wiki", redact("\n".join(lines)))
 
 
+def project_status_markdown(status: ProjectStatus) -> list[str]:
+    lines = [
+        "## Project Status",
+        "",
+        f"- Runtime: {status.runtime}",
+        f"- Project status: {status.project_status}",
+        f"- Last verified: {STATUS_VERIFIED_DATE}",
+        "",
+        "## Remaining Tasks",
+        "",
+    ]
+    lines.extend(f"- {task}" for task in status.remaining_tasks)
+    lines.extend(["", "## Evidence", ""])
+    lines.extend(f"- {item}" for item in status.evidence)
+    return lines
+
+
+def generate_projects_page(root: Path, statuses: list[ProjectStatus]) -> Page:
+    lines = [
+        page_header("Homelab Project Status"),
+        f"Last verified: {STATUS_VERIFIED_DATE}",
+        "",
+        "## Status Model",
+        "",
+        "- Runtime: `running`, `partial`, `stopped`, `unknown`, or `non-runtime`.",
+        "- Project status: `operational`, `in progress`, `needs IaC cleanup`, `needs docs`, `blocked`, or `archived`.",
+        "- Remaining tasks are concrete next actions, not placeholders.",
+        "",
+        "## Projects",
+        "",
+        "| Project | Kind | Runtime | Project status | Path |",
+        "| --- | --- | --- | --- | --- |",
+    ]
+    for status in statuses:
+        wiki_path = f"/homelab/stacks/{status.name}" if status.kind == "stack" else ""
+        label = f"[{status.name}]({wiki_path})" if wiki_path else status.name
+        lines.append(
+            "| "
+            + " | ".join(
+                [
+                    label,
+                    status_label(status.kind),
+                    status_label(status.runtime),
+                    status_label(status.project_status),
+                    f"`{status_label(status.path)}`",
+                ]
+            )
+            + " |"
+        )
+
+    lines.extend(["", "## Remaining Task Index", ""])
+    for status in statuses:
+        lines.append(f"### {status.name}")
+        lines.append("")
+        lines.append(f"- Runtime: {status.runtime}")
+        lines.append(f"- Project status: {status.project_status}")
+        lines.extend(f"- {task}" for task in status.remaining_tasks)
+        lines.append("")
+    return Page(Path("homelab/projects.md"), "Homelab Project Status", redact("\n".join(lines)))
+
+
 def generate_stack_page(root: Path, stack_dir: Path) -> Page:
     stack = stack_dir.name
+    status = stack_project_status(root, stack_dir)
     compose = compose_file(stack_dir)
     compose_rel = compose.relative_to(root).as_posix() if compose else "missing"
     compose_text = compose.read_text(encoding="utf-8", errors="replace") if compose else ""
@@ -193,6 +561,8 @@ def generate_stack_page(root: Path, stack_dir: Path) -> Page:
         f"- Compose tracked in Git: {'yes' if tracked else 'no'}",
         f"- Has SOPS env: {'yes' if sops_files else 'no'}",
         f"- README: {'yes' if readme.exists() else 'no'}",
+        "",
+        *project_status_markdown(status),
         "",
         "## Services",
         "",
@@ -360,7 +730,8 @@ def generate_migration_gaps(root: Path, stacks: list[Path]) -> Page:
 
 def generate(root: Path, stack: str | None, include_backfill: bool) -> GenerateResult:
     stacks = discover_stacks(root)
-    pages = [generate_index(root, stacks), generate_migration_gaps(root, stacks)]
+    statuses = collect_project_statuses(root, stacks)
+    pages = [generate_homepage(stacks), generate_index(root, stacks), generate_projects_page(root, statuses), generate_migration_gaps(root, stacks)]
     selected = [path for path in stacks if stack is None or path.name == stack]
     if stack and not selected:
         raise SystemExit(f"Unknown stack: {stack}")
@@ -426,17 +797,17 @@ def graphql_request(url: str, token: str, query: str, variables: dict[str, objec
         raise RuntimeError(f"Wiki.js GraphQL HTTP {exc.code}: {body}") from exc
 
 
-def publish_page(base_url: str, token: str, page: Page) -> None:
-    lookup_query = """
+PAGE_LOOKUP_QUERY = """
 query($path: String!, $locale: String!) {
   pages {
-    single(path: $path, locale: $locale) {
+    singleByPath(path: $path, locale: $locale) {
       id
     }
   }
 }
 """
-    create_mutation = """
+
+PAGE_CREATE_MUTATION = """
 mutation($content: String!, $description: String!, $editor: String!, $isPublished: Boolean!, $isPrivate: Boolean!, $locale: String!, $path: String!, $tags: [String]!, $title: String!) {
   pages {
     create(content: $content, description: $description, editor: $editor, isPublished: $isPublished, isPrivate: $isPrivate, locale: $locale, path: $path, tags: $tags, title: $title) {
@@ -446,7 +817,8 @@ mutation($content: String!, $description: String!, $editor: String!, $isPublishe
   }
 }
 """
-    update_mutation = """
+
+PAGE_UPDATE_MUTATION = """
 mutation($id: Int!, $content: String!, $description: String!, $editor: String!, $isPublished: Boolean!, $isPrivate: Boolean!, $locale: String!, $path: String!, $tags: [String]!, $title: String!) {
   pages {
     update(id: $id, content: $content, description: $description, editor: $editor, isPublished: $isPublished, isPrivate: $isPrivate, locale: $locale, path: $path, tags: $tags, title: $title) {
@@ -456,6 +828,9 @@ mutation($id: Int!, $content: String!, $description: String!, $editor: String!, 
   }
 }
 """
+
+
+def publish_page(base_url: str, token: str, page: Page) -> None:
     path = page.wiki_path
     common = {
         "content": page.content,
@@ -468,13 +843,13 @@ mutation($id: Int!, $content: String!, $description: String!, $editor: String!, 
         "tags": ["homelab", "iac", "generated"],
         "title": page.title,
     }
-    lookup = graphql_request(base_url, token, lookup_query, {"path": path, "locale": "en"})
-    page_id = (((lookup.get("data") or {}).get("pages") or {}).get("single") or {}).get("id")
+    lookup = graphql_request(base_url, token, PAGE_LOOKUP_QUERY, {"path": path, "locale": "en"})
+    page_id = (((lookup.get("data") or {}).get("pages") or {}).get("singleByPath") or {}).get("id")
     if page_id:
-        response = graphql_request(base_url, token, update_mutation, common | {"id": int(page_id)})
+        response = graphql_request(base_url, token, PAGE_UPDATE_MUTATION, common | {"id": int(page_id)})
         result = ((response.get("data") or {}).get("pages") or {}).get("update", {}).get("responseResult", {})
     else:
-        response = graphql_request(base_url, token, create_mutation, common)
+        response = graphql_request(base_url, token, PAGE_CREATE_MUTATION, common)
         result = ((response.get("data") or {}).get("pages") or {}).get("create", {}).get("responseResult", {})
     if result and not result.get("succeeded", False):
         raise RuntimeError(f"Wiki.js publish failed for {path}: {result.get('message')}")

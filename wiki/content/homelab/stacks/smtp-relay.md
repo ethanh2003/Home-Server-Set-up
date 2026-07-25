@@ -6,9 +6,28 @@
 ## IaC Status
 
 - Compose file: `smtp-relay/docker-compose.yml`
-- Compose tracked in Git: no
+- Compose tracked in Git: yes
 - Has SOPS env: no
 - README: yes
+
+## Project Status
+
+- Runtime: running
+- Project status: operational
+- Last verified: 2026-07-04
+
+## Remaining Tasks
+
+- Keep routine image updates, backups, and documentation current.
+
+## Evidence
+
+- Compose file: `smtp-relay/docker-compose.yml`
+- Compose tracked in Git: yes
+- README: yes
+- SOPS env: no
+- Git status for stack path: clean
+- `smtp-relay`: running (healthy)
 
 ## Services
 

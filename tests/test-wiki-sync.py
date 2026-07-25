@@ -6,6 +6,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 
@@ -60,6 +61,10 @@ networks:
         encoding="utf-8",
     )
 
+    adjacent = tmpdir / "obsidian-api-mcp"
+    adjacent.mkdir()
+    (adjacent / "pyproject.toml").write_text("[project]\nname = \"obsidian-api-mcp\"\n", encoding="utf-8")
+
     subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
     subprocess.run(["git", "config", "user.email", "test@example.invalid"], cwd=repo, check=True)
     subprocess.run(["git", "config", "user.name", "Wiki Sync Test"], cwd=repo, check=True)
@@ -76,7 +81,9 @@ class WikiSyncTests(unittest.TestCase):
             result = module.generate(repo, stack=None, include_backfill=True)
             paths = {page.relative_path.as_posix() for page in result.pages}
 
+            self.assertIn("home.md", paths)
             self.assertIn("homelab/index.md", paths)
+            self.assertIn("homelab/projects.md", paths)
             self.assertIn("homelab/stacks/alpha-stack.md", paths)
             self.assertIn("homelab/runbooks/iac-runbook.md", paths)
             self.assertIn("homelab/history/2026-06-01-alpha.md", paths)
@@ -87,6 +94,11 @@ class WikiSyncTests(unittest.TestCase):
             self.assertNotIn("bad-secret", combined)
             self.assertIn("[REDACTED]", combined)
             self.assertIn("alpha-stack", combined)
+            self.assertIn("Homelab Documentation", combined)
+            self.assertIn("[Project Status](/homelab/projects)", combined)
+            self.assertIn("## Project Status", combined)
+            self.assertIn("## Remaining Tasks", combined)
+            self.assertIn("obsidian-api-mcp", combined)
             self.assertIn("Has SOPS env: yes", combined)
         finally:
             shutil.rmtree(repo.parent)
@@ -98,7 +110,9 @@ class WikiSyncTests(unittest.TestCase):
             result = module.generate(repo, stack="alpha-stack", include_backfill=False)
             paths = {page.relative_path.as_posix() for page in result.pages}
 
+            self.assertIn("home.md", paths)
             self.assertIn("homelab/index.md", paths)
+            self.assertIn("homelab/projects.md", paths)
             self.assertIn("homelab/stacks/alpha-stack.md", paths)
             self.assertIn("homelab/migration-gaps.md", paths)
             self.assertFalse(any(path.startswith("homelab/history/") for path in paths))
@@ -140,6 +154,43 @@ class WikiSyncTests(unittest.TestCase):
             )
             self.assertEqual(fresh.returncode, 0, fresh.stderr)
             self.assertIn("wiki content is current", fresh.stdout)
+        finally:
+            shutil.rmtree(repo.parent)
+
+    def test_publish_lookup_uses_wikijs_v2_path_lookup(self):
+        module = load_module()
+
+        self.assertIn("singleByPath(path: $path, locale: $locale)", module.PAGE_LOOKUP_QUERY)
+        self.assertNotIn("single(path: $path", module.PAGE_LOOKUP_QUERY)
+
+    def test_compose_ps_timeout_returns_unknown_runtime(self):
+        module = load_module()
+        with tempfile.TemporaryDirectory(prefix="wiki-sync-compose-timeout-") as tmp:
+            root = Path(tmp)
+            compose = root / "docker-compose.yml"
+            compose.write_text("services:\n  slow:\n    image: example/slow\n", encoding="utf-8")
+            with mock.patch.object(module.subprocess, "run", side_effect=module.subprocess.TimeoutExpired(["docker"], 8)):
+                runtime, evidence = module.compose_ps(root, compose)
+
+        self.assertEqual(runtime, "unknown")
+        self.assertIn("timed out", evidence[0])
+
+    def test_stack_git_status_ignores_staged_changes_but_reports_live_drift(self):
+        module = load_module()
+        repo = make_repo()
+        stack = repo / "alpha-stack"
+        try:
+            compose = stack / "docker-compose.yml"
+            compose.write_text(compose.read_text(encoding="utf-8") + "# staged\n", encoding="utf-8")
+            subprocess.run(["git", "add", "alpha-stack/docker-compose.yml"], cwd=repo, check=True)
+
+            self.assertEqual(module.stack_git_status(repo, stack), "clean")
+
+            readme = stack / "README.md"
+            readme.write_text(readme.read_text(encoding="utf-8") + "\nLive edit.\n", encoding="utf-8")
+            (stack / "local-note.txt").write_text("not staged\n", encoding="utf-8")
+
+            self.assertEqual(module.stack_git_status(repo, stack), "modified, untracked")
         finally:
             shutil.rmtree(repo.parent)
 

@@ -10,9 +10,34 @@
 - Has SOPS env: yes
 - README: yes
 
+## Project Status
+
+- Runtime: running
+- Project status: operational
+- Last verified: 2026-07-04
+
+## Remaining Tasks
+
+- Keep backup, validation, deploy, restart, logs, and rollback helper docs aligned with the live scripts.
+- Maintain separate handling for the primary Home Assistant instance and `HomeAssistant2`.
+
+## Evidence
+
+- Compose file: `home-assistant/docker-compose.yml`
+- Compose tracked in Git: yes
+- README: yes
+- SOPS env: yes
+- Git status for stack path: modified, untracked
+- `home-assistant`: running (healthy)
+- `home-assistant-2`: running (healthy)
+- `mosquitto`: running (healthy)
+- `matter-server`: running
+- `ring-mqtt`: running
+
 ## Services
 
 - `home-assistant`
+- `home-assistant-2`
 - `mosquitto`
 - `ring-mqtt`
 - `matter-server`

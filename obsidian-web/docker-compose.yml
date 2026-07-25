@@ -3,8 +3,13 @@ services:
     image: lscr.io/linuxserver/obsidian:latest
     container_name: obsidian-web
     restart: unless-stopped
-    env_file:
-      - .env
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+      TZ: ${TZ}
+      CUSTOM_USER: ${CUSTOM_USER}
+      PASSWORD: ${PASSWORD}
+      TITLE: ${TITLE}
     volumes:
       - ./config:/config
       - /data/Obsidian/Main:/vaults/Main

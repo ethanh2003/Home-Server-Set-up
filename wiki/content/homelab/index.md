@@ -16,11 +16,19 @@
 - Publish command: `./scripts/wiki-sync.sh --all --publish`
 - Focus stack command: `./scripts/wiki-sync.sh --stack <stack-name>`
 
+## Project Status
+
+- [Project Status](/homelab/projects)
+
 ## Stacks
 
 - [actual-budget](/homelab/stacks/actual-budget)
 - [arr-suite](/homelab/stacks/arr-suite)
 - [cloudflared](/homelab/stacks/cloudflared)
+- [dawarich](/homelab/stacks/dawarich)
+- [dockhand](/homelab/stacks/dockhand)
+- [ebooks](/homelab/stacks/ebooks)
+- [frigate](/homelab/stacks/frigate)
 - [github-runner](/homelab/stacks/github-runner)
 - [glances](/homelab/stacks/glances)
 - [home-assistant](/homelab/stacks/home-assistant)
@@ -32,13 +40,17 @@
 - [monitoring-stack](/homelab/stacks/monitoring-stack)
 - [nginx-proxy-manager](/homelab/stacks/nginx-proxy-manager)
 - [obsidian-livesync](/homelab/stacks/obsidian-livesync)
+- [obsidian-web](/homelab/stacks/obsidian-web)
 - [paperless-ngx](/homelab/stacks/paperless-ngx)
 - [pingvin-share](/homelab/stacks/pingvin-share)
+- [portainer](/homelab/stacks/portainer)
 - [sftp](/homelab/stacks/sftp)
 - [smtp-relay](/homelab/stacks/smtp-relay)
 - [spotify-stats](/homelab/stacks/spotify-stats)
 - [stash](/homelab/stacks/stash)
+- [timemachine](/homelab/stacks/timemachine)
 - [traefik](/homelab/stacks/traefik)
+- [vault-inbox](/homelab/stacks/vault-inbox)
 - [wiki](/homelab/stacks/wiki)
 
 ## Core Runbooks

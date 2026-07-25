@@ -6,9 +6,29 @@
 ## IaC Status
 
 - Compose file: `pingvin-share/docker-compose.yml`
-- Compose tracked in Git: no
+- Compose tracked in Git: yes
 - Has SOPS env: no
 - README: yes
+
+## Project Status
+
+- Runtime: running
+- Project status: operational
+- Last verified: 2026-07-04
+
+## Remaining Tasks
+
+- Review whether Pingvin settings should stay UI-managed or gain tracked documentation for each production setting.
+
+## Evidence
+
+- Compose file: `pingvin-share/docker-compose.yml`
+- Compose tracked in Git: yes
+- README: yes
+- SOPS env: no
+- Git status for stack path: clean
+- `redis`: running (healthy)
+- `pingvin-share`: running (healthy)
 
 ## Services
 

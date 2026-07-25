@@ -10,6 +10,27 @@
 - Has SOPS env: no
 - README: no
 
+## Project Status
+
+- Runtime: running
+- Project status: in progress
+- Last verified: 2026-07-04
+
+## Remaining Tasks
+
+- Complete Cloudflare cutover from NPM to Traefik after route parity is verified.
+- Keep NPM available as rollback until public ingress has been proven off-LAN.
+- Add a stack README/runbook with purpose, endpoints, backup/restore notes, and common commands.
+
+## Evidence
+
+- Compose file: `traefik/docker-compose.yml`
+- Compose tracked in Git: yes
+- README: no
+- SOPS env: no
+- Git status for stack path: modified
+- `traefik`: running
+
 ## Services
 
 - `traefik`

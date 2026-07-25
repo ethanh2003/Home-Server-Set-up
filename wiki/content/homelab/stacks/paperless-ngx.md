@@ -10,6 +10,29 @@
 - Has SOPS env: yes
 - README: yes
 
+## Project Status
+
+- Runtime: running
+- Project status: operational
+- Last verified: 2026-07-04
+
+## Remaining Tasks
+
+- Keep routine image updates, backups, and documentation current.
+
+## Evidence
+
+- Compose file: `paperless-ngx/docker-compose.yml`
+- Compose tracked in Git: yes
+- README: yes
+- SOPS env: yes
+- Git status for stack path: modified, untracked
+- `webserver`: running (healthy)
+- `broker`: running (healthy)
+- `davmail`: running
+- `gotenberg`: running
+- `tika`: running
+
 ## Services
 
 - `broker`

@@ -10,6 +10,26 @@
 - Has SOPS env: yes
 - README: yes
 
+## Project Status
+
+- Runtime: running
+- Project status: operational
+- Last verified: 2026-07-04
+
+## Remaining Tasks
+
+- Keep routine image updates, backups, and documentation current.
+
+## Evidence
+
+- Compose file: `wiki/docker-compose.yml`
+- Compose tracked in Git: yes
+- README: yes
+- SOPS env: yes
+- Git status for stack path: modified
+- `wiki-db`: running (healthy)
+- `wikijs`: running
+
 ## Services
 
 - `wiki-db`
