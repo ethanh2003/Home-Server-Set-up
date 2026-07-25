@@ -12,7 +12,7 @@
 
 ## Project Status
 
-- Runtime: running
+- Runtime: not checked
 - Project status: in progress
 - Last verified: 2026-07-04
 
@@ -27,10 +27,8 @@
 - Compose tracked in Git: yes
 - README: yes
 - SOPS env: yes
-- Git status for stack path: clean
-- `mongo`: running (healthy)
-- `server`: running
-- `web`: running
+- Git status for stack path: omitted
+- Live runtime state is monitored in Prometheus and omitted from deterministic wiki output.
 
 ## Services
 

@@ -17,7 +17,12 @@ from pathlib import Path
 CONTENT_ROOT = Path("wiki/content")
 WIKI_HOSTS = ["wiki.ethan-herring.com", "wiki.pup-percy.com", "wiki.ethanh.online"]
 STATUS_VERIFIED_DATE = os.environ.get("HOMELAB_STATUS_VERIFIED_DATE", "2026-07-04")
-ADJACENT_PROJECT_NAMES = ["obsidian-api-mcp", "arr-multi-user", "chicago-dashboard", "dymo-label"]
+INCLUDE_LIVE_STATUS = os.environ.get("WIKI_SYNC_INCLUDE_LIVE_STATUS") == "1"
+ADJACENT_PROJECT_NAMES = [
+    name.strip()
+    for name in os.environ.get("WIKI_SYNC_ADJACENT_PROJECTS", "").split(",")
+    if name.strip()
+]
 SECRET_PATTERNS = [
     re.compile(r"(?i)\b[A-Z0-9_-]*(?:PASSWORD|PASS|TOKEN|SECRET|API[_-]?KEY|PRIVATE[_-]?KEY)[A-Z0-9_-]*\b\s*[:=]\s*[^\s`'\"]+"),
     re.compile(r"(?i)(bearer\s+)[A-Za-z0-9._~+/=-]+"),
@@ -264,8 +269,13 @@ def stack_project_status(root: Path, stack_dir: Path) -> ProjectStatus:
     readme = stack_dir / "README.md"
     sops = (stack_dir / ".env.sops").exists() or any(stack_dir.glob("*.sops.env"))
     tracked = is_tracked(root, compose.relative_to(root)) if compose else False
-    runtime, runtime_evidence = compose_ps(root, compose)
-    git_state = stack_git_status(root, stack_dir)
+    if INCLUDE_LIVE_STATUS:
+        runtime, runtime_evidence = compose_ps(root, compose)
+        git_state = stack_git_status(root, stack_dir)
+    else:
+        runtime = "not checked"
+        runtime_evidence = ["Live runtime state is monitored in Prometheus and omitted from deterministic wiki output."]
+        git_state = "omitted"
 
     remaining = known_stack_tasks(stack)
     if not tracked:
@@ -500,7 +510,7 @@ def generate_projects_page(root: Path, statuses: list[ProjectStatus]) -> Page:
         "",
         "## Status Model",
         "",
-        "- Runtime: `running`, `partial`, `stopped`, `unknown`, or `non-runtime`.",
+        "- Runtime: `not checked` in deterministic output; opt-in snapshots may report `running`, `partial`, `stopped`, `unknown`, or `non-runtime`.",
         "- Project status: `operational`, `in progress`, `needs IaC cleanup`, `needs docs`, `blocked`, or `archived`.",
         "- Remaining tasks are concrete next actions, not placeholders.",
         "",

@@ -12,7 +12,7 @@
 
 ## Project Status
 
-- Runtime: running
+- Runtime: not checked
 - Project status: operational
 - Last verified: 2026-07-04
 
@@ -26,9 +26,8 @@
 - Compose tracked in Git: yes
 - README: yes
 - SOPS env: no
-- Git status for stack path: clean
-- `redis`: running (healthy)
-- `pingvin-share`: running (healthy)
+- Git status for stack path: omitted
+- Live runtime state is monitored in Prometheus and omitted from deterministic wiki output.
 
 ## Services
 

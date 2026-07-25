@@ -98,8 +98,10 @@ class WikiSyncTests(unittest.TestCase):
             self.assertIn("[Project Status](/homelab/projects)", combined)
             self.assertIn("## Project Status", combined)
             self.assertIn("## Remaining Tasks", combined)
-            self.assertIn("obsidian-api-mcp", combined)
+            self.assertIn("Runtime: not checked", combined)
             self.assertIn("Has SOPS env: yes", combined)
+            projects = next(page.content for page in result.pages if page.relative_path.as_posix() == "homelab/projects.md")
+            self.assertNotIn("obsidian-api-mcp", projects)
         finally:
             shutil.rmtree(repo.parent)
 
@@ -191,6 +193,19 @@ class WikiSyncTests(unittest.TestCase):
             (stack / "local-note.txt").write_text("not staged\n", encoding="utf-8")
 
             self.assertEqual(module.stack_git_status(repo, stack), "modified, untracked")
+        finally:
+            shutil.rmtree(repo.parent)
+
+    def test_default_generation_does_not_query_live_runtime(self):
+        module = load_module()
+        repo = make_repo()
+        try:
+            with mock.patch.object(module, "compose_ps", side_effect=AssertionError("live runtime queried")):
+                result = module.generate(repo, stack=None, include_backfill=False)
+
+            combined = "\n".join(page.content for page in result.pages)
+            self.assertIn("Runtime: not checked", combined)
+            self.assertIn("Git status for stack path: omitted", combined)
         finally:
             shutil.rmtree(repo.parent)
 

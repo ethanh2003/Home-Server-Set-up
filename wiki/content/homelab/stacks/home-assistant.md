@@ -12,7 +12,7 @@
 
 ## Project Status
 
-- Runtime: running
+- Runtime: not checked
 - Project status: operational
 - Last verified: 2026-07-04
 
@@ -27,12 +27,8 @@
 - Compose tracked in Git: yes
 - README: yes
 - SOPS env: yes
-- Git status for stack path: modified, untracked
-- `home-assistant`: running (healthy)
-- `home-assistant-2`: running (healthy)
-- `mosquitto`: running (healthy)
-- `matter-server`: running
-- `ring-mqtt`: running
+- Git status for stack path: omitted
+- Live runtime state is monitored in Prometheus and omitted from deterministic wiki output.
 
 ## Services
 

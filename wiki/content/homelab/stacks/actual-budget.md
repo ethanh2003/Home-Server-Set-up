@@ -12,7 +12,7 @@
 
 ## Project Status
 
-- Runtime: running
+- Runtime: not checked
 - Project status: needs docs
 - Last verified: 2026-07-04
 
@@ -26,8 +26,8 @@
 - Compose tracked in Git: yes
 - README: no
 - SOPS env: yes
-- Git status for stack path: clean
-- `actualbudget`: running (healthy)
+- Git status for stack path: omitted
+- Live runtime state is monitored in Prometheus and omitted from deterministic wiki output.
 
 ## Services
 
