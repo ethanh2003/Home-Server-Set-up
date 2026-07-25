@@ -310,6 +310,7 @@ class SystemdUnitTests(unittest.TestCase):
         self.assertIn("Type=oneshot", service)
         self.assertIn("NoNewPrivileges=true", service)
         self.assertIn("ProtectSystem=strict", service)
+        self.assertIn("RuntimeDirectoryPreserve=yes", service)
         self.assertIn("OnUnitActiveSec=30s", timer)
         self.assertIn("Persistent=true", timer)
         self.assertNotIn("rtsp://", service + timer)

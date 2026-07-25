@@ -11,6 +11,7 @@ WorkingDirectory=/home/ethan/docker
 ExecStart=/usr/bin/python3 /home/ethan/docker/frigate/scripts/recording_watchdog.py --camera living_room_-_dog_view --camera living_room_-_couch_view --recordings-root /mnt/data_14tb/media/frigate/recordings --compose-file /home/ethan/docker/frigate/docker-compose.yml --state-file /run/frigate-recording-watchdog/state.json --lock-file /run/frigate-recording-watchdog/lock --max-age 90 --confirm-after 30 --cooldown 600
 RuntimeDirectory=frigate-recording-watchdog
 RuntimeDirectoryMode=0750
+RuntimeDirectoryPreserve=yes
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectHome=read-only
