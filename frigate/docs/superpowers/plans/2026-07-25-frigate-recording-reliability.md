@@ -1,6 +1,6 @@
 # Frigate Recording Reliability Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Preserve native-quality continuous recording for both living-room cameras and automatically recover when a recording pipeline becomes stale even if Frigate still reports healthy.
 
@@ -22,6 +22,7 @@
 - Recreate or restart only Frigate; preserve unrelated worktree and service state.
 - Back up live configuration before editing and verify both cameras after every runtime mutation.
 - The watchdog checks every 30 seconds, considers segments stale after 90 seconds, confirms staleness on a second run, and enforces a ten-minute restart cooldown.
+- Preserve the watchdog runtime directory across completed oneshot runs so confirmation and cooldown state survives between timer intervals.
 - Update Obsidian only with secret-free verified operational facts.
 
 ---
@@ -36,7 +37,7 @@
 - Consumes: camera names from repeated `--camera` arguments, host recording root from `--recordings-root`, Compose file from `--compose-file`, and persistent state from `--state-file`
 - Produces: `newest_segment(root: Path, camera: str, now: datetime) -> Path | None`, `segment_is_valid(path: Path, now: datetime, max_age: int) -> bool`, `evaluate_camera(...) -> str`, and a CLI exit status of 0 for healthy/recovered or 1 for stale/unrecoverable
 
-- [ ] **Step 1: Create tests for current-hour and previous-hour segment discovery**
+- [x] **Step 1: Create tests for current-hour and previous-hour segment discovery**
 
 Write `frigate/tests/test_recording_watchdog.py` using `unittest`, `tempfile`, and `unittest.mock`. Include:
 
@@ -69,7 +70,7 @@ class SegmentTests(unittest.TestCase):
             self.assertFalse(watchdog.segment_is_valid(path, now, 90))
 ```
 
-- [ ] **Step 2: Run the focused tests and verify they fail**
+- [x] **Step 2: Run the focused tests and verify they fail**
 
 Run:
 
@@ -80,7 +81,7 @@ python3 -m unittest -v frigate/tests/test_recording_watchdog.py
 
 Expected: import or attribute failures because the watchdog module does not exist.
 
-- [ ] **Step 3: Implement segment discovery and validation**
+- [x] **Step 3: Implement segment discovery and validation**
 
 In `frigate/scripts/recording_watchdog.py`, implement:
 
@@ -109,7 +110,7 @@ def segment_is_valid(path: Path | None, now: datetime, max_age: int) -> bool:
 
 Use timezone-aware UTC timestamps throughout.
 
-- [ ] **Step 4: Add policy tests for confirmation and cooldown**
+- [x] **Step 4: Add policy tests for confirmation and cooldown**
 
 Add tests that use a temporary JSON state file and assert:
 
@@ -127,7 +128,7 @@ Cover these cases:
 - a restart within the previous 600 seconds suppresses another restart;
 - one stale camera is reported without hiding the other camera's healthy state.
 
-- [ ] **Step 5: Run the policy tests and verify they fail**
+- [x] **Step 5: Run the policy tests and verify they fail**
 
 Run:
 
@@ -138,7 +139,7 @@ python3 -m unittest -v frigate/tests/test_recording_watchdog.py
 
 Expected: failures for the not-yet-implemented state and policy functions.
 
-- [ ] **Step 6: Implement state, locking, restart, health wait, and probing**
+- [x] **Step 6: Implement state, locking, restart, health wait, and probing**
 
 Implement a `CameraResult` dataclass with `camera`, `action`, and `segment` fields. Store:
 
@@ -162,7 +163,7 @@ The CLI must:
 - log camera, segment age, action, and recovery outcome to stdout/stderr without printing RTSP URLs or configuration contents;
 - support `--dry-run`, which reports the intended restart without running Docker.
 
-- [ ] **Step 7: Run all watchdog tests**
+- [x] **Step 7: Run all watchdog tests**
 
 Run:
 
@@ -174,7 +175,7 @@ python3 -m py_compile frigate/scripts/recording_watchdog.py
 
 Expected: all tests pass and compilation exits 0.
 
-- [ ] **Step 8: Commit the watchdog**
+- [x] **Step 8: Commit the watchdog**
 
 Run:
 
@@ -201,19 +202,20 @@ Expected: the commit contains only the watchdog and its tests.
 - Consumes: `/usr/bin/python3`, `frigate/scripts/recording_watchdog.py`, Docker, the Compose file, and the recordings filesystem
 - Produces: `frigate-recording-watchdog.service` and a 30-second persistent timer
 
-- [ ] **Step 1: Write a failing unit-content test**
+- [x] **Step 1: Write a failing unit-content test**
 
 Add a test that reads the unit templates and asserts:
 
 ```python
-self.assertIn("Type=oneshot", service)
-self.assertIn("NoNewPrivileges=true", service)
-self.assertIn("OnUnitActiveSec=30s", timer)
+        self.assertIn("Type=oneshot", service)
+        self.assertIn("NoNewPrivileges=true", service)
+        self.assertIn("RuntimeDirectoryPreserve=yes", service)
+        self.assertIn("OnUnitActiveSec=30s", timer)
 self.assertIn("Persistent=true", timer)
 self.assertNotIn("rtsp://", service + timer)
 ```
 
-- [ ] **Step 2: Run the focused unit test and verify it fails**
+- [x] **Step 2: Run the focused unit test and verify it fails**
 
 Run:
 
@@ -225,7 +227,7 @@ python3 -m unittest -v \
 
 Expected: failure because the unit files do not exist.
 
-- [ ] **Step 3: Create the oneshot service**
+- [x] **Step 3: Create the oneshot service**
 
 Create `frigate/systemd/frigate-recording-watchdog.service` with:
 
@@ -243,6 +245,7 @@ WorkingDirectory=/home/ethan/docker
 ExecStart=/usr/bin/python3 /home/ethan/docker/frigate/scripts/recording_watchdog.py --camera living_room_-_dog_view --camera living_room_-_couch_view --recordings-root /mnt/data_14tb/media/frigate/recordings --compose-file /home/ethan/docker/frigate/docker-compose.yml --state-file /run/frigate-recording-watchdog/state.json --lock-file /run/frigate-recording-watchdog/lock --max-age 90 --confirm-after 30 --cooldown 600
 RuntimeDirectory=frigate-recording-watchdog
 RuntimeDirectoryMode=0750
+RuntimeDirectoryPreserve=yes
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectHome=read-only
@@ -254,7 +257,7 @@ IOSchedulingClass=idle
 TimeoutStartSec=300
 ```
 
-- [ ] **Step 4: Create the timer**
+- [x] **Step 4: Create the timer**
 
 Create `frigate/systemd/frigate-recording-watchdog.timer` with:
 
@@ -273,7 +276,7 @@ Unit=frigate-recording-watchdog.service
 WantedBy=timers.target
 ```
 
-- [ ] **Step 5: Validate templates and tests**
+- [x] **Step 5: Validate templates and tests**
 
 Run:
 
@@ -287,7 +290,7 @@ systemd-analyze verify \
 
 Expected: tests pass and `systemd-analyze verify` reports no errors.
 
-- [ ] **Step 6: Commit the units**
+- [x] **Step 6: Commit the units**
 
 Run:
 
@@ -315,7 +318,7 @@ Expected: the commit contains only the systemd templates and associated test cha
 - Consumes: the existing direct camera URLs under `go2rtc.streams`
 - Produces: local Frigate inputs at `rtsp://127.0.0.1:8554/<camera-name>`, explicit VAAPI decode, disabled detection, direct-copy recording video, and the 3 GiB cgroup policy
 
-- [ ] **Step 1: Create timestamped restricted backups**
+- [x] **Step 1: Create timestamped restricted backups**
 
 Run:
 
@@ -335,7 +338,7 @@ cmp /home/ethan/docker/frigate/docker-compose.yml \
 
 Expected: both `cmp` commands exit 0 and backups are mode 0600.
 
-- [ ] **Step 2: Test AAC passthrough from both local restreams**
+- [x] **Step 2: Test AAC passthrough from both local restreams**
 
 For each camera, record a disposable 60-second sample from its current go2rtc stream:
 
@@ -359,7 +362,7 @@ sample_dir="$(mktemp -d)"
 
 Expected: both files contain H.264 2560x1920 video, AAC audio, approximately 60 seconds duration, and FFmpeg reports no non-monotonic or backward-timestamp errors. Use `preset-record-generic-audio-copy` only if both pass; otherwise retain `preset-record-generic-audio-aac`.
 
-- [ ] **Step 3: Write a failing configuration-policy test**
+- [x] **Step 3: Write a failing configuration-policy test**
 
 Create `frigate/tests/test_reliability_config.py` that loads the live YAML files and asserts:
 
@@ -387,7 +390,7 @@ self.assertNotIn("privileged", service)
 
 Also assert that the two `go2rtc.streams` values remain present without printing or snapshotting their credential-bearing values.
 
-- [ ] **Step 4: Run the policy test and verify it fails**
+- [x] **Step 4: Run the policy test and verify it fails**
 
 Run:
 
@@ -398,7 +401,7 @@ python3 -m unittest -v frigate/tests/test_reliability_config.py
 
 Expected: failures for direct camera FFmpeg inputs, implicit VAAPI selection, missing explicit disabled detection, and the old memory values.
 
-- [ ] **Step 5: Apply the minimal YAML and Compose changes**
+- [x] **Step 5: Apply the minimal YAML and Compose changes**
 
 In `config/config.yml`:
 
@@ -420,7 +423,7 @@ In `docker-compose.yml`, set:
     pids_limit: 768
 ```
 
-- [ ] **Step 6: Test the narrow GPU telemetry capability without changing Frigate**
+- [x] **Step 6: Test the narrow GPU telemetry capability without changing Frigate**
 
 Run:
 
@@ -441,7 +444,7 @@ Expected: if the command lists the Intel GPU and exits 0, add this to the Frigat
 
 If the command still reports PMU permission failure, do not add the capability. Never add `privileged: true`.
 
-- [ ] **Step 7: Run static configuration validation**
+- [x] **Step 7: Run static configuration validation**
 
 Run:
 
@@ -454,7 +457,7 @@ docker exec frigate python3 -m frigate --validate-config
 
 Expected: tests pass, Compose exits 0, and Frigate prints `Your config file is valid`.
 
-- [ ] **Step 8: Commit the secret-free policy files**
+- [x] **Step 8: Commit the secret-free policy files**
 
 Run:
 
@@ -483,7 +486,7 @@ Expected: only the Compose file and policy test are committed. `config/config.ym
 - Consumes: validated Frigate/Compose configuration, tested watchdog, and systemd templates
 - Produces: a healthy Frigate runtime, fresh valid recordings for both cameras, an enabled recovery timer, verification evidence, and secret-free operations documentation
 
-- [ ] **Step 1: Capture pre-rollout state**
+- [x] **Step 1: Capture pre-rollout state**
 
 Record without storing secrets:
 
@@ -501,7 +504,7 @@ df -h /mnt/data_14tb/media/frigate
 
 Expected: Dog View is fresh, Couch View's stale baseline is visible, and the recording filesystem is writable with adequate space.
 
-- [ ] **Step 2: Recreate only Frigate once**
+- [x] **Step 2: Recreate only Frigate once**
 
 Run:
 
@@ -518,7 +521,7 @@ docker inspect frigate --format '{{.State.Health.Status}}'
 
 Expected: `healthy`.
 
-- [ ] **Step 3: Verify both recording pipelines before installing automation**
+- [x] **Step 3: Verify both recording pipelines before installing automation**
 
 Wait up to 120 seconds for a new segment from each camera. Probe the newest segment for each:
 
@@ -542,7 +545,7 @@ done
 
 Expected for both: non-empty H.264 video, 2560x1920, native average frame rate, valid audio, and a recent modification time. Couch View must have a segment newer than the rollout start time.
 
-- [ ] **Step 4: Verify effective restream, GPU, and cgroup policy**
+- [x] **Step 4: Verify effective restream, GPU, and cgroup policy**
 
 Check the effective API without printing credential-bearing source URLs. Confirm:
 
@@ -554,7 +557,7 @@ Check the effective API without printing credential-bearing source URLs. Confirm
 - `/sys/fs/cgroup/memory.events` has no new `oom` or `oom_kill` increments after recreation;
 - if `PERFMON` was added, Frigate logs no longer contain a new PMU initialization failure and `/api/stats` contains Intel GPU utilization.
 
-- [ ] **Step 5: Install and validate the systemd units**
+- [x] **Step 5: Install and validate the systemd units**
 
 Run:
 
@@ -573,8 +576,10 @@ systemctl list-timers --all frigate-recording-watchdog.timer
 ```
 
 Expected: the live check exits successfully and the timer is enabled with its next run scheduled.
+Also confirm `/run/frigate-recording-watchdog/state.json` remains present after
+the oneshot service becomes inactive.
 
-- [ ] **Step 6: Exercise recovery policy without interrupting live cameras**
+- [x] **Step 6: Exercise recovery policy without interrupting live cameras**
 
 Run all unit tests, then invoke the watchdog against a temporary stale fixture with `--dry-run` twice at controlled timestamps.
 
@@ -586,7 +591,7 @@ Expected:
 - the live watchdog check remains successful;
 - no live recording stream is intentionally stopped.
 
-- [ ] **Step 7: Observe post-rollout stability**
+- [x] **Step 7: Observe post-rollout stability**
 
 For at least ten minutes, sample every minute:
 
@@ -599,7 +604,7 @@ For at least ten minutes, sample every minute:
 
 Expected: both cameras remain below the 90-second freshness threshold, memory remains comfortably below 3 GiB, no new OOM occurs, and unrelated services remain available.
 
-- [ ] **Step 8: Document verified operations in Obsidian**
+- [x] **Step 8: Document verified operations in Obsidian**
 
 Append a dated, secret-free section to `/data/Obsidian/Main/Homelab/Memory/Frigate.md` containing:
 
@@ -615,7 +620,7 @@ Append a dated, secret-free section to `/data/Obsidian/Main/Homelab/Memory/Friga
 
 Do not include camera URLs, credentials, private configuration values, or raw logs.
 
-- [ ] **Step 9: Mark the plan complete and commit documentation**
+- [x] **Step 9: Mark the plan complete and commit documentation**
 
 Mark completed checkboxes in this plan, then run:
 
