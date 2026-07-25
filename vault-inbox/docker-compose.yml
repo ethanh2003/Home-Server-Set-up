@@ -1,0 +1,37 @@
+services:
+  vault-inbox:
+    build: .
+    container_name: vault-inbox
+    user: "1000:1000"
+    restart: unless-stopped
+    environment:
+      VAULT_INBOX_DATABASE_PATH: /data/vault-inbox.sqlite3
+      VAULT_INBOX_VAULT_ROOT: /vault
+      VAULT_INBOX_APP_REPO_ROOT: /app
+      VAULT_INBOX_PUBLIC_BASE_URL: https://inbox.ethan-herring.com
+      VAULT_INBOX_OLLAMA_BASE_URL: http://192.168.1.185:11434
+      VAULT_INBOX_OLLAMA_EMBEDDING_MODEL: nomic-embed-text
+      VAULT_INBOX_CODEX_ENABLED: "false"
+      VAULT_INBOX_WORKER_ENABLED: "false"
+      VAULT_INBOX_SMTP_ENABLED: "true"
+      VAULT_INBOX_SMTP_HOST: smtp-relay
+      VAULT_INBOX_SMTP_PORT: "25"
+      VAULT_INBOX_SMTP_FROM: vault-inbox@ethan-herring.com
+      VAULT_INBOX_SMTP_TO: admin@ethan-herring.com
+      HOME: /data
+    volumes:
+      - ./data:/data
+      - ./logs:/app/logs
+      - /data/Obsidian/Main:/vault
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/api/health >/dev/null"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    networks:
+      - proxy_net
+
+networks:
+  proxy_net:
+    external: true

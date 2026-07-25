@@ -30,8 +30,12 @@ services:
       - /home/ethan/docker:/source/docker_configs:ro
       - /home:/source/home_folder:ro
       - /mnt/data_14tb:/source/mass_storage:ro
+      - /data/Obsidian/Main:/source/obsidian:ro
+      - /mnt/data_14tb/Images/immich:/source/immich_originals:ro
+      - /mnt/data_14tb/paperless/media:/source/paperless_media:ro
+      - /mnt/misc_5tb/exports/paperless:/source/paperless_exports:ro
       # Map Destination (Read-Write)
-      - /mnt/aux_raid/:/backups
+      - /mnt/misc_5tb/backups:/backups
     security_opt:
       - no-new-privileges:true
     networks:

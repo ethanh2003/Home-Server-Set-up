@@ -1,19 +1,6 @@
 name: IaC Deploy
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - '**/docker-compose.yml'
-      - '**/*.sops.env'
-      - '**/.env.sops'
-      - '**/.env.sops.yml'
-      - '**/.env.sops.yaml'
-      - 'github-runner/**'
-      - '.github/workflows/iac-deploy.yml'
-      - 'scripts/**'
-      - '.sops.yaml'
   workflow_dispatch:
     inputs:
       base_ref:

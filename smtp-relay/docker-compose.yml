@@ -1,0 +1,17 @@
+services:
+  smtp-relay:
+    image: boky/postfix:latest
+    container_name: smtp-relay
+    restart: unless-stopped
+    environment:
+      RELAYHOST: smtp-relay.gmail.com:587
+      ALLOWED_SENDER_DOMAINS: ethan-herring.com
+      POSTFIX_myhostname: smtp.ethan-herring.com
+      POSTFIX_mynetworks: 127.0.0.0/8,172.25.0.0/16
+      POSTFIX_smtp_tls_security_level: encrypt
+    networks:
+      - proxy_net
+
+networks:
+  proxy_net:
+    external: true

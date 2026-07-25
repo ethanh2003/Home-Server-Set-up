@@ -1,0 +1,14 @@
+[Unit]
+Description=Time Machine macvlan host shim
+Wants=network-online.target
+After=network-online.target docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/home/ethan/docker/timemachine
+ExecStart=/home/ethan/docker/timemachine/scripts/create-macvlan-shim.sh
+ExecStop=-/usr/bin/ip link delete tm-shim
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,12 @@
+# Live database files are crash-consistency risks and often unreadable to the
+# backup user. Their validated, application-consistent exports live in
+# /home/ethan/docker/.db_dumps and are included by the /home snapshot.
+immich/database/postgres
+immich/database/postgres_pg14_backup
+wiki/postgres-data
+obsidian-livesync/couchdb-data
+spotify-stats/your_spotify_db.corrupt-*
+spotify-stats/your_spotify_db.mongo8-crash-*
+
+# Replaceable cache state.
+pingvin-share/redis-data

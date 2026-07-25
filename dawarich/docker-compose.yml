@@ -1,0 +1,146 @@
+services:
+  dawarich_redis:
+    image: redis:7.4-alpine
+    container_name: dawarich_redis
+    command: >
+      redis-server --save 900 1 --save 300 10 --appendonly no
+    restart: unless-stopped
+    volumes:
+      - dawarich_redis_data:/data
+    networks:
+      - dawarich_internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  dawarich_db:
+    image: postgis/postgis:17-3.5-alpine
+    container_name: dawarich_db
+    shm_size: 1g
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - dawarich_db_data:/var/lib/postgresql/data
+      - dawarich_shared:/var/shared
+    networks:
+      - dawarich_internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  dawarich_app:
+    image: freikin/dawarich:latest
+    container_name: dawarich_app
+    stdin_open: true
+    tty: true
+    entrypoint: web-entrypoint.sh
+    command: ["bin/rails", "server", "-p", "3000", "-b", "::"]
+    restart: unless-stopped
+    environment:
+      RAILS_ENV: production
+      REDIS_URL: redis://dawarich_redis:6379
+      DATABASE_HOST: dawarich_db
+      DATABASE_PORT: 5432
+      DATABASE_USERNAME: ${POSTGRES_USER}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+      DATABASE_NAME: ${POSTGRES_DB}
+      APPLICATION_HOSTS: ${APPLICATION_HOSTS}
+      APPLICATION_PROTOCOL: https
+      DOMAIN: ${PRIMARY_DOMAIN}
+      TIME_ZONE: ${TIME_ZONE}
+      DISTANCE_UNIT: mi
+      PROMETHEUS_EXPORTER_ENABLED: "false"
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+      RAILS_LOG_TO_STDOUT: "true"
+      SELF_HOSTED: "true"
+      STORE_GEODATA: "true"
+    volumes:
+      - dawarich_public:/var/app/public
+      - dawarich_watched:/var/app/tmp/imports/watched
+      - dawarich_storage:/var/app/storage
+      - dawarich_db_data:/dawarich_db_data
+    networks:
+      - dawarich_internal
+      - proxy_net
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --header='Host: dawarich.ethanh.online' --header='X-Forwarded-Proto: https' -qO - http://127.0.0.1:3000/api/v1/health | grep -q '\"status\"[[:space:]]*:[[:space:]]*\"ok\"'",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 30s
+    depends_on:
+      dawarich_db:
+        condition: service_healthy
+      dawarich_redis:
+        condition: service_healthy
+
+  dawarich_sidekiq:
+    image: freikin/dawarich:latest
+    container_name: dawarich_sidekiq
+    stdin_open: true
+    tty: true
+    entrypoint: sidekiq-entrypoint.sh
+    command: ["sidekiq"]
+    restart: unless-stopped
+    environment:
+      RAILS_ENV: production
+      REDIS_URL: redis://dawarich_redis:6379
+      DATABASE_HOST: dawarich_db
+      DATABASE_PORT: 5432
+      DATABASE_USERNAME: ${POSTGRES_USER}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+      DATABASE_NAME: ${POSTGRES_DB}
+      APPLICATION_HOSTS: ${APPLICATION_HOSTS}
+      APPLICATION_PROTOCOL: https
+      DOMAIN: ${PRIMARY_DOMAIN}
+      BACKGROUND_PROCESSING_CONCURRENCY: ${BACKGROUND_PROCESSING_CONCURRENCY}
+      PROMETHEUS_EXPORTER_ENABLED: "false"
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+      RAILS_LOG_TO_STDOUT: "true"
+      SELF_HOSTED: "true"
+      STORE_GEODATA: "true"
+    volumes:
+      - dawarich_public:/var/app/public
+      - dawarich_watched:/var/app/tmp/imports/watched
+      - dawarich_storage:/var/app/storage
+    networks:
+      - dawarich_internal
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f sidekiq"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 30s
+    depends_on:
+      dawarich_db:
+        condition: service_healthy
+      dawarich_redis:
+        condition: service_healthy
+      dawarich_app:
+        condition: service_healthy
+
+networks:
+  dawarich_internal:
+  proxy_net:
+    external: true
+
+volumes:
+  dawarich_db_data:
+  dawarich_public:
+  dawarich_redis_data:
+  dawarich_shared:
+  dawarich_storage:
+  dawarich_watched:

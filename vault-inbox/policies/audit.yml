@@ -1,0 +1,30 @@
+id: audit
+version: 1
+summary: Guardrails for nightly cleanup and second-brain maintenance.
+audit_cadence: nightly
+first_full_cleanup:
+  mode: staged
+  required_steps:
+    - inventory
+    - dry_run_report
+    - approval
+    - apply
+automatic_actions:
+  - fix invalid frontmatter in managed notes
+  - repair missing dashboard/index links
+  - prune weak topic indexes after repeated validation evidence
+  - normalize sparse controlled tags
+  - validate Obsidian Tasks syntax
+blocked_actions:
+  - delete protected history
+  - rewrite raw transcripts
+  - modify hidden/plugin/config paths
+  - install plugins without approval
+  - create clinical claims or diagnoses
+required_audit_record:
+  - job_id
+  - workflow
+  - changed_files
+  - validation_result
+  - git_commit
+  - fallback_email_status

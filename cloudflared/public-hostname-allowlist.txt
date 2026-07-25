@@ -1,0 +1,24 @@
+# Jellyfin
+jellyfin.ethanh.online
+jellyfin.ethan-herring.com
+jellyfin.pup-percy.com
+
+# Immich
+immich.ethanh.online
+immich.ethan-herring.com
+immich.pup-percy.com
+
+# Jellyseerr
+jellyseerr.ethanh.online
+jellyseerr.ethan-herring.com
+jellyseerr.pup-percy.com
+
+# Pingvin Share
+share.ethanh.online
+share.ethan-herring.com
+share.pup-percy.com
+
+# LinkStack
+me.ethanh.online
+me.ethan-herring.com
+me.pup-percy.com

@@ -8,6 +8,14 @@ Thumbs.db
 *_data/
 *_db/
 
+# Monitoring configuration is declarative IaC, not runtime application state.
+!monitoring-stack/prometheus_config/
+!monitoring-stack/prometheus_config/prometheus.yml
+!monitoring-stack/prometheus_config/rules/
+!monitoring-stack/prometheus_config/rules/*.yml
+!monitoring-stack/blackbox_config/
+!monitoring-stack/blackbox_config/*.yml
+
 # Matches standard config/data directory names inside service folders
 */config/
 */data/
@@ -28,8 +36,10 @@ temp/
 # Environment Variables & Secrets
 .env
 *.env
+!*.env.example
 !*.sops.env
 secrets.yaml
+!secrets.example.yaml
 *.key
 *.pem
 *.crt
@@ -44,6 +54,7 @@ rclone_backup.log
 sftp/host_keys/
 sftp/sftpgo_backup/
 home-assistant/backups/
+cloudflared/backups/
 
 # Database Files
 *.db
@@ -56,6 +67,7 @@ home-assistant/backups/
 *.log
 logs/
 */logs/
+arr-suite/reports/
 *.pid
 *.bak
 *.lock
@@ -67,3 +79,19 @@ __pycache__/
 gha-creds-*.json
 github-runner/runner_work/
 wiki/postgres-data/
+monitoring-stack/node_exporter_textfile/*.prom
+
+# Generated runtime state, local build checkouts, and recovery artifacts
+*-data/
+*/state/
+*/reports/
+*/node_modules/
+*/.venv/
+*/.pytest_cache/
+*/backups/
+*.codex-bak-*
+*.save
+*corrupt-*/
+*crash-*/
+actual-budget/actual-auto-sync-src/
+spotify-stats/upstream-your_spotify/

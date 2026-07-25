@@ -1,0 +1,54 @@
+global:
+  scrape_interval: 15s
+
+rule_files:
+  - /etc/prometheus/rules/*.yml
+
+scrape_configs:
+  - job_name: 'prometheus'
+    scrape_interval: 1m
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'node_exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+
+  - job_name: 'cadvisor'
+    scrape_interval: 5s
+    static_configs:
+      - targets:
+        - 'cadvisor:8080'
+
+  - job_name: 'loki'
+    static_configs:
+      - targets: ['loki:3100']
+
+  - job_name: 'blackbox_public'
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+          - https://jellyfin.ethanh.online
+          - https://jellyfin.ethan-herring.com
+          - https://jellyfin.pup-percy.com
+          - https://immich.ethanh.online
+          - https://immich.ethan-herring.com
+          - https://immich.pup-percy.com
+          - https://jellyseerr.ethanh.online
+          - https://jellyseerr.ethan-herring.com
+          - https://jellyseerr.pup-percy.com
+          - https://share.ethanh.online
+          - https://share.ethan-herring.com
+          - https://share.pup-percy.com
+          - https://me.ethanh.online
+          - https://me.ethan-herring.com
+          - https://me.pup-percy.com
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115

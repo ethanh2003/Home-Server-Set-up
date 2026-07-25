@@ -1,0 +1,34 @@
+services:
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    restart: unless-stopped
+    command:
+      - -H
+      - tcp://portainer_agent:9001
+      - --tlsskipverify
+    ports:
+      - "8000:8000"
+      - "9000:9000"
+    volumes:
+      - ../portainer_data:/data
+    networks:
+      - portainer_network
+      - proxy_net
+
+  portainer_agent:
+    image: portainer/agent:latest
+    container_name: portainer_agent
+    user: "0"
+    restart: unless-stopped
+    volumes:
+      - /:/host
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - portainer_network
+
+networks:
+  portainer_network:
+    driver: bridge
+  proxy_net:
+    external: true

@@ -1,0 +1,35 @@
+id: capture
+version: 1
+summary: Guardrails for fast capture, URL capture, and pasted Markdown batches.
+read_roots:
+  - Vault Admin/
+  - Personal/
+  - Work/
+  - Homelab/
+  - Therapy/Intake/
+  - Therapy/Topics/
+  - Therapy/People/
+write_roots:
+  - Vault Admin/
+  - Personal/
+  - Work/
+  - Homelab/
+  - Therapy/Intake/
+protected_roots:
+  - .obsidian/
+  - .trash/
+  - .claude/
+  - .claudian/
+  - Therapy/Transcripts/
+  - Therapy/Summaries/
+  - Therapy/Archive/
+required_behavior:
+  - Preserve a Vault Admin inbox trail for every capture.
+  - Prefer links and topic pages over excessive tags.
+  - Use sparse controlled tags only.
+  - Use Obsidian Tasks checkbox syntax for explicit tasks.
+  - Do not create a topic index from a one-off mention.
+  - Never write secrets, tokens, cookies, raw logs, or private plugin settings into notes.
+therapy_rules:
+  - New/current Therapy captures may update active intake notes only.
+  - Do not retrieve, summarize, rewrite, or link from old Therapy transcripts or summaries.

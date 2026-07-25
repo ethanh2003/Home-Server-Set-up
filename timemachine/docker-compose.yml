@@ -1,0 +1,49 @@
+services:
+  timemachine:
+    image: mbentley/timemachine:smb
+    container_name: timemachine
+    hostname: timemachine
+    restart: unless-stopped
+    environment:
+      ADVERTISED_HOSTNAME: timemachine
+      CUSTOM_SMB_CONF: "false"
+      CUSTOM_USER: "false"
+      DEBUG_LEVEL: "1"
+      HIDE_SHARES: "no"
+      MIMIC_MODEL: TimeCapsule8,119
+      PASSWORD: ${PASSWORD:?Set PASSWORD in .env}
+      SET_PERMISSIONS: "false"
+      SHARE_NAME: TimeMachine
+      TM_GID: "1000"
+      TM_GROUPNAME: timemachine
+      TM_UID: "1000"
+      TM_USERNAME: timemachine
+      VOLUME_SIZE_LIMIT: 1500 G
+      WORKGROUP: WORKGROUP
+    mac_address: ${TIMEMACHINE_MAC_ADDRESS:-02:42:c0:a8:01:e6}
+    networks:
+      timemachine_lan:
+        ipv4_address: ${TIMEMACHINE_IP:-192.168.1.230}
+    tmpfs:
+      - /run/samba
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - type: bind
+        source: /mnt/misc_5tb/backups/time-machine
+        target: /opt/timemachine
+
+networks:
+  timemachine_lan:
+    name: timemachine_lan
+    driver: macvlan
+    driver_opts:
+      parent: ${LAN_PARENT:-enp1s0}
+    ipam:
+      config:
+        - subnet: ${LAN_SUBNET:-192.168.1.0/24}
+          gateway: ${LAN_GATEWAY:-192.168.1.1}
+          aux_addresses:
+            host_shim: ${HOST_SHIM_IP:-192.168.1.229}

@@ -1,0 +1,21 @@
+[Unit]
+Description=vault-inbox host Codex worker
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/ethan/docker/vault-inbox/backend
+Environment=HOME=/home/ethan
+Environment=CODEX_HOME=/home/ethan/.codex
+ExecStart=/home/ethan/docker/vault-inbox/backend/.venv/bin/python -m vault_inbox.host_worker --database-path /home/ethan/docker/vault-inbox/data/vault-inbox.sqlite3 --vault-root /data/Obsidian/Main --app-repo-root /home/ethan/docker/vault-inbox --codex-binary /usr/local/bin/codex --interval 5
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/data/Obsidian/Main /home/ethan/docker/vault-inbox/data /home/ethan/docker/vault-inbox/logs /home/ethan/.codex
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+
+[Install]
+WantedBy=default.target

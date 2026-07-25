@@ -1,0 +1,46 @@
+id: schema
+version: 1
+summary: Machine-checkable note schema policy for v1 validators.
+required_frontmatter:
+  common:
+    - note_type
+  vault_inbox_daily:
+    - status
+    - tags
+  personal_topic:
+    - status
+    - last_updated
+    - tags
+  homelab_project:
+    - project_status
+    - last_updated
+    - tags
+  therapy_misc:
+    - status
+    - created
+    - tags
+allowed_tags:
+  workflow:
+    - vault-admin
+    - vault-inbox
+    - vault-inbox/policy
+    - vault-inbox/dashboard
+  domains:
+    - personal
+    - personal/topic
+    - personal/project
+    - work
+    - work/project
+    - homelab
+    - homelab/project
+    - homelab/documentation
+    - homelab/memory
+    - therapy
+    - therapy/misc-note
+    - therapy/topic
+    - therapy/person
+index_rules:
+  create_topic_index_after: repeated_topic
+  require_h1: true
+  require_overview_section: true
+  allow_empty_indexes: false

@@ -1,0 +1,37 @@
+services:
+  stash:
+    image: stashapp/stash:latest
+    container_name: stash
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+    ports:
+      - "9999:9999"
+    volumes:
+      - /mnt/data_14tb/media/x:/data
+      - /mnt/data_14tb/media/.stash_metadata:/metadata
+      - ./config:/root/.stash
+    networks:
+      - proxy_net
+  komga:
+    image: gotson/komga
+    container_name: komga
+    volumes:
+      - type: bind
+        source: ./config/komga
+        target: /config
+      - type: bind
+        source: /mnt/data_14tb/media/x
+        target: /data
+    #ports:
+    #  - 25600:25600
+    user: "1000:1000"
+    restart: unless-stopped
+    networks:
+      - proxy_net
+networks:
+  proxy_net:
+    external: true

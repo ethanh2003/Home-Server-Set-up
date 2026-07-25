@@ -1,0 +1,179 @@
+diff --git a/apps/server/src/tools/apis/spotifyApi.ts b/apps/server/src/tools/apis/spotifyApi.ts
+index a447975..274a576 100644
+--- a/apps/server/src/tools/apis/spotifyApi.ts
++++ b/apps/server/src/tools/apis/spotifyApi.ts
+@@ -129,10 +129,17 @@ export class SpotifyAPI {
+ 	}
+ 
+ 	async getTracks(spotifyIds: string[]) {
++		if (spotifyIds.length === 0) {
++			return [];
++		}
++		await this.checkToken();
++		// Spotify Get Several Tracks accepts up to 50 ids per request
++		const chunks = chunk(spotifyIds, 50);
+ 		const tracks: (SpotifyTrack | undefined)[] = [];
+-		for (const id of spotifyIds) {
+-			const track = await this.getTrack(id);
+-			tracks.push(track);
++		for (const ch of chunks) {
++			const res = await this.client.instance.get(`/tracks?ids=${ch.join(",")}`);
++			const data: (SpotifyTrack | null)[] = res.data.tracks;
++			tracks.push(...data.map((t) => (t === null ? undefined : (t as SpotifyTrack))));
+ 		}
+ 		return tracks;
+ 	}
+@@ -148,10 +155,17 @@ export class SpotifyAPI {
+ 	}
+ 
+ 	async getAlbums(spotifyIds: string[]) {
++		if (spotifyIds.length === 0) {
++			return [];
++		}
++		await this.checkToken();
++		// Spotify Get Several Albums accepts up to 20 ids per request
++		const chunks = chunk(spotifyIds, 20);
+ 		const albums: (SpotifyAlbum | undefined)[] = [];
+-		for (const id of spotifyIds) {
+-			const album = await this.getAlbum(id);
+-			albums.push(album);
++		for (const ch of chunks) {
++			const res = await this.client.instance.get(`/albums?ids=${ch.join(",")}`);
++			const data: (SpotifyAlbum | null)[] = res.data.albums;
++			albums.push(...data.map((a) => (a === null ? undefined : (a as SpotifyAlbum))));
+ 		}
+ 		return albums;
+ 	}
+@@ -167,10 +181,17 @@ export class SpotifyAPI {
+ 	}
+ 
+ 	async getArtists(spotifyIds: string[]) {
++		if (spotifyIds.length === 0) {
++			return [];
++		}
++		await this.checkToken();
++		// Spotify Get Several Artists accepts up to 50 ids per request
++		const chunks = chunk(spotifyIds, 50);
+ 		const artists: (SpotifyArtist | undefined)[] = [];
+-		for (const id of spotifyIds) {
+-			const artist = await this.getArtist(id);
+-			artists.push(artist);
++		for (const ch of chunks) {
++			const res = await this.client.instance.get(`/artists?ids=${ch.join(",")}`);
++			const data: (SpotifyArtist | null)[] = res.data.artists;
++			artists.push(...data.map((a) => (a === null ? undefined : (a as SpotifyArtist))));
+ 		}
+ 		return artists;
+ 	}
+diff --git a/apps/server/src/tools/importers/full_privacy.ts b/apps/server/src/tools/importers/full_privacy.ts
+index 6b09f83..f1ed05c 100644
+--- a/apps/server/src/tools/importers/full_privacy.ts
++++ b/apps/server/src/tools/importers/full_privacy.ts
+@@ -123,33 +123,36 @@ export class FullPrivacyImporter
+ 		}
+ 	};
+ 
+-	initWithJSONContent = async (content: any[]) => {
++	initWithJSONContent = (content: any[]) => {
+ 		const value = fullPrivacyFileSchema.safeParse(content);
+ 		if (value.success) {
+ 			this.elements = value.data;
+-			return content;
++			return true;
+ 		}
+ 		logger.error(
+ 			"If you submitted the right files and this error comes up, please open an issue with the following logs at https://github.com/Yooooomi/your_spotify",
+ 			JSON.stringify(value.error.issues, null, " "),
+ 		);
+-		return null;
++		return false;
+ 	};
+ 
+ 	initWithFiles = async (filePaths: string[]) => {
+-		const files = await Promise.all(filePaths.map((f) => readFile(f)));
+-		const filesContent = files.map((f) => JSON.parse(f.toString()));
+-
+-		const totalContent = filesContent.reduce<FullPrivacyItem[]>((acc, curr) => {
+-			acc.push(...curr);
+-			return acc;
+-		}, []);
+-
+-		if (!this.initWithJSONContent(totalContent)) {
+-			return false;
++		const totalContent: FullPrivacyItem[] = [];
++		for (const filePath of filePaths) {
++			logger.info(`Reading import file ${filePath}`);
++			const file = await readFile(filePath);
++			const fileContent = JSON.parse(file.toString());
++			const value = fullPrivacyFileSchema.safeParse(fileContent);
++			if (!value.success) {
++				logger.error(
++					"If you submitted the right files and this error comes up, please open an issue with the following logs at https://github.com/Yooooomi/your_spotify",
++					JSON.stringify(value.error.issues, null, " "),
++				);
++				return false;
++			}
++			totalContent.push(...value.data);
+ 		}
+-
+-		return true;
++		return this.initWithJSONContent(totalContent);
+ 	};
+ 
+ 	init = async (
+diff --git a/apps/server/src/tools/importers/privacy.ts b/apps/server/src/tools/importers/privacy.ts
+index c4a90e7..e1b53a6 100644
+--- a/apps/server/src/tools/importers/privacy.ts
++++ b/apps/server/src/tools/importers/privacy.ts
+@@ -119,33 +119,36 @@ export class PrivacyImporter
+     }
+   };
+ 
+-  initWithJSONContent = async (content: any[]) => {
++  initWithJSONContent = (content: any[]) => {
+     const value = privacyFileSchema.safeParse(content);
+     if (value.success) {
+       this.elements = value.data;
+-      return content;
++      return true;
+     }
+     logger.error(
+       "If you submitted the right files and this error comes up, please open an issue with the following logs at https://github.com/Yooooomi/your_spotify",
+       JSON.stringify(value.error.issues, null, " "),
+     );
+-    return null;
++    return false;
+   };
+ 
+   initWithFiles = async (filePaths: string[]) => {
+-    const files = await Promise.all(filePaths.map(f => readFile(f)));
+-    const filesContent = files.map(f => JSON.parse(f.toString()));
+-
+-    const totalContent = filesContent.reduce<PrivacyItem[]>((acc, curr) => {
+-      acc.push(...curr);
+-      return acc;
+-    }, []);
+-
+-    if (!this.initWithJSONContent(totalContent)) {
+-      return false;
++    const totalContent: PrivacyItem[] = [];
++    for (const filePath of filePaths) {
++      logger.info(`Reading import file ${filePath}`);
++      const file = await readFile(filePath);
++      const fileContent = JSON.parse(file.toString());
++      const value = privacyFileSchema.safeParse(fileContent);
++      if (!value.success) {
++        logger.error(
++          "If you submitted the right files and this error comes up, please open an issue with the following logs at https://github.com/Yooooomi/your_spotify",
++          JSON.stringify(value.error.issues, null, " "),
++        );
++        return false;
++      }
++      totalContent.push(...value.data);
+     }
+-
+-    return true;
++    return this.initWithJSONContent(totalContent);
+   };
+ 
+   init = async (

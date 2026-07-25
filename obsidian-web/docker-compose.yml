@@ -1,0 +1,31 @@
+services:
+  obsidian-web:
+    image: lscr.io/linuxserver/obsidian:latest
+    container_name: obsidian-web
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./config:/config
+      - /data/Obsidian/Main:/vaults/Main
+    networks:
+      - proxy_net
+    shm_size: "1gb"
+    mem_limit: "3g"
+    memswap_limit: "4g"
+    cpus: "2.0"
+    pids_limit: 512
+    security_opt:
+      - seccomp=unconfined
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl -kfsS -u "$$CUSTOM_USER:$$PASSWORD" https://localhost:3001/ >/dev/null # gitleaks:allow
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
+
+networks:
+  proxy_net:
+    external: true

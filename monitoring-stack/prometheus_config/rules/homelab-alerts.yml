@@ -1,0 +1,98 @@
+groups:
+  - name: homelab-health
+    rules:
+      - alert: HomelabBackupJobFailed
+        expr: homelab_backup_last_run_success == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: The latest application export job failed
+
+      - alert: HomelabBackupStale
+        expr: time() - homelab_backup_last_success_timestamp_seconds > 93600
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: No successful application export in 26 hours
+
+      - alert: HomelabKopiaSnapshotErrors
+        expr: homelab_kopia_latest_snapshot_errors > 0 or homelab_kopia_query_success == 0
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: Kopia snapshot status is unavailable or contains errors
+
+      - alert: HomelabSmartDiskUnhealthy
+        expr: homelab_smart_device_healthy == 0
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: SMART reports an unhealthy disk
+
+      - alert: HomelabSmartSectorDegradation
+        expr: homelab_smart_pending_sectors > 0 or homelab_smart_uncorrectable_sectors > 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: SMART reports pending or uncorrectable sectors
+
+      - alert: HomelabRootFilesystemLow
+        expr: 100 * node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"} < 15
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: Root filesystem has less than 15 percent free
+
+      - alert: HomelabSwapPressure
+        expr: (node_memory_SwapTotal_bytes - node_memory_SwapFree_bytes) / node_memory_SwapTotal_bytes > 0.8
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: Swap usage has remained above 80 percent
+
+      - alert: HomelabOomKill
+        expr: increase(node_vmstat_oom_kill[15m]) > 0 or homelab_docker_oom_killed_containers > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: The host or a container recorded an OOM kill
+
+      - alert: HomelabContainerUnhealthy
+        expr: homelab_docker_unhealthy_containers > 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: One or more Docker containers are unhealthy
+
+      - alert: HomelabGluetunUnhealthy
+        expr: homelab_gluetun_healthy == 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: Gluetun is not reporting healthy
+
+      - alert: HomelabPublicAppProbeFailed
+        expr: probe_success{job="blackbox_public"} == 0
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: An approved public application hostname is unavailable
+
+      - alert: HomelabMonitoringTargetDown
+        expr: up{job=~"node_exporter|cadvisor|loki"} == 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: A local monitoring target is down

@@ -1,0 +1,76 @@
+services:
+  calibre-web-automated:
+    image: crocodilestick/calibre-web-automated:latest
+    container_name: calibre-web-automated
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - NETWORK_SHARE_MODE=false
+    volumes:
+      - ./config/calibre-web-automated:/config
+      - ${CALIBRE_LIBRARY_PATH}:/calibre-library
+      - ${CWA_INGEST_PATH}:/cwa-book-ingest
+      - ./config/calibre-web-automated/plugins:/config/.config/calibre/plugins
+    ports:
+      - ${CWA_PORT}:8083
+    networks:
+      - proxy_net
+
+  lazylibrarian:
+    image: lscr.io/linuxserver/lazylibrarian:latest
+    container_name: lazylibrarian
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - UMASK=022
+      - DOCKER_MODS=linuxserver/mods:universal-calibre|linuxserver/mods:lazylibrarian-ffmpeg
+    volumes:
+      - ./config/lazylibrarian:/config
+      - ${LAZYLIBRARIAN_DOWNLOADS_PATH}:/downloads
+      - ${CALIBRE_LIBRARY_PATH}:/books
+      - ${CWA_INGEST_PATH}:/cwa-book-ingest
+      - ./imports/storygraph:/storygraph-imports
+      - ./reports:/reports
+    ports:
+      - ${LAZYLIBRARIAN_PORT}:5299
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    networks:
+      - proxy_net
+
+  storygraph-watch:
+    image: python:3.12-alpine
+    container_name: storygraph-watch
+    restart: unless-stopped
+    working_dir: /scripts
+    command: python /scripts/storygraph_watch.py
+    secrets:
+      - lazylibrarian_api_key
+    environment:
+      - TZ=${TZ}
+      - STORYGRAPH_WATCH_INTERVAL=${STORYGRAPH_WATCH_INTERVAL}
+      - STORYGRAPH_IMPORT_LAZYLIBRARIAN=${STORYGRAPH_IMPORT_LAZYLIBRARIAN}
+      - STORYGRAPH_SEARCH_AFTER_IMPORT=${STORYGRAPH_SEARCH_AFTER_IMPORT}
+      - LAZYLIBRARIAN_URL=${LAZYLIBRARIAN_URL}
+      - LAZYLIBRARIAN_API_KEY_FILE=/run/secrets/lazylibrarian_api_key
+    volumes:
+      - ./scripts:/scripts:ro
+      - ./imports/storygraph:/imports/storygraph
+      - ./reports:/reports
+      - ./state:/state
+      - ${CALIBRE_LIBRARY_PATH}:/calibre-library:ro
+    depends_on:
+      - lazylibrarian
+      - calibre-web-automated
+
+networks:
+  proxy_net:
+    external: true
+
+secrets:
+  lazylibrarian_api_key:
+    file: ./secrets/lazylibrarian_api_key
