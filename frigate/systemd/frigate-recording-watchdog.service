@@ -1,0 +1,22 @@
+[Unit]
+Description=Verify Frigate per-camera recording freshness
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+WorkingDirectory=/home/ethan/docker
+ExecStart=/usr/bin/python3 /home/ethan/docker/frigate/scripts/recording_watchdog.py --camera living_room_-_dog_view --camera living_room_-_couch_view --recordings-root /mnt/data_14tb/media/frigate/recordings --compose-file /home/ethan/docker/frigate/docker-compose.yml --state-file /run/frigate-recording-watchdog/state.json --lock-file /run/frigate-recording-watchdog/lock --max-age 90 --confirm-after 30 --cooldown 600
+RuntimeDirectory=frigate-recording-watchdog
+RuntimeDirectoryMode=0750
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=read-only
+ProtectSystem=strict
+ReadOnlyPaths=/home/ethan/docker/frigate /mnt/data_14tb/media/frigate
+ReadWritePaths=/run/frigate-recording-watchdog /run/docker.sock
+Nice=10
+IOSchedulingClass=idle
+TimeoutStartSec=300

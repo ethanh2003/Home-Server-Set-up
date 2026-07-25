@@ -13,6 +13,7 @@ import unittest
 MODULE_PATH = (
     Path(__file__).resolve().parents[1] / "scripts" / "recording_watchdog.py"
 )
+SYSTEMD_DIR = Path(__file__).resolve().parents[1] / "systemd"
 
 
 def load_watchdog():
@@ -294,6 +295,24 @@ class ExternalBoundaryTests(unittest.TestCase):
                 f"{root / 'docker-compose.yml'} restart frigate",
                 output.getvalue(),
             )
+
+
+class SystemdUnitTests(unittest.TestCase):
+    def test_units_are_hardened_and_scheduled_every_30_seconds(self):
+        service_path = SYSTEMD_DIR / "frigate-recording-watchdog.service"
+        timer_path = SYSTEMD_DIR / "frigate-recording-watchdog.timer"
+        self.assertTrue(service_path.exists(), f"missing {service_path}")
+        self.assertTrue(timer_path.exists(), f"missing {timer_path}")
+
+        service = service_path.read_text(encoding="utf-8")
+        timer = timer_path.read_text(encoding="utf-8")
+
+        self.assertIn("Type=oneshot", service)
+        self.assertIn("NoNewPrivileges=true", service)
+        self.assertIn("ProtectSystem=strict", service)
+        self.assertIn("OnUnitActiveSec=30s", timer)
+        self.assertIn("Persistent=true", timer)
+        self.assertNotIn("rtsp://", service + timer)
 
 
 if __name__ == "__main__":

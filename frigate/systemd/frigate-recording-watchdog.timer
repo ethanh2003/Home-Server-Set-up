@@ -1,0 +1,12 @@
+[Unit]
+Description=Run Frigate recording freshness watchdog
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=30s
+AccuracySec=5s
+Persistent=true
+Unit=frigate-recording-watchdog.service
+
+[Install]
+WantedBy=timers.target
