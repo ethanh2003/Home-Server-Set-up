@@ -6,10 +6,12 @@ services:
     stop_grace_period: 30s
     shm_size: "512mb"
     cpus: "2.0"
-    mem_limit: "2g"
-    mem_reservation: "1g"
-    memswap_limit: "2g"
+    mem_limit: "3g"
+    mem_reservation: "1536m"
+    memswap_limit: "3g"
     pids_limit: 768
+    cap_add:
+      - PERFMON
     group_add:
       - "993" # render
       - "44"  # video
