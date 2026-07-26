@@ -3,6 +3,10 @@
 > Generated from `/home/ethan/docker`. Edit the Git source, then run wiki sync.
 
 ```text
+2026-07-26 5f3acde fix: alert only on recent OOM events
+2026-07-26 0105ea1 fix: recover Actual Budget sync scheduler
+2026-07-26 9e83149 fix: export protected Home Assistant state
+2026-07-26 6f7a2c3 fix: restore Docker container metrics
 2026-07-25 1bad781 ops: rescue backups and reconcile active homelab IaC
 2026-07-25 64d175d docs: record Frigate reliability rollout
 2026-07-25 d478548 fix: preserve Frigate watchdog state

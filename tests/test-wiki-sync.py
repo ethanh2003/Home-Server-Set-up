@@ -159,6 +159,99 @@ class WikiSyncTests(unittest.TestCase):
         finally:
             shutil.rmtree(repo.parent)
 
+    def test_history_is_stable_after_generated_content_commit(self):
+        repo = make_repo()
+        try:
+            env = os.environ | {"IAC_REPO_ROOT": str(repo)}
+            written = subprocess.run(
+                [sys.executable, str(SCRIPT), "--backfill"],
+                cwd=repo,
+                env=env,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            self.assertEqual(written.returncode, 0, written.stderr)
+
+            subprocess.run(["git", "add", "wiki/content"], cwd=repo, check=True)
+            subprocess.run(
+                [
+                    "git",
+                    "-c",
+                    "user.name=Codex Test",
+                    "-c",
+                    "user.email=codex-test@example.invalid",
+                    "commit",
+                    "-m",
+                    "docs: sync generated wiki",
+                ],
+                cwd=repo,
+                check=True,
+                stdout=subprocess.PIPE,
+            )
+
+            compose = repo / "alpha-stack" / "docker-compose.yml"
+            compose.write_text(
+                compose.read_text(encoding="utf-8").replace(
+                    "example/alpha:1.0", "example/alpha:2.0"
+                ),
+                encoding="utf-8",
+            )
+            subprocess.run(["git", "add", "alpha-stack/docker-compose.yml"], cwd=repo, check=True)
+            subprocess.run(
+                [
+                    "git",
+                    "-c",
+                    "user.name=Codex Test",
+                    "-c",
+                    "user.email=codex-test@example.invalid",
+                    "commit",
+                    "-m",
+                    "ops: update alpha image",
+                ],
+                cwd=repo,
+                check=True,
+                stdout=subprocess.PIPE,
+            )
+
+            written = subprocess.run(
+                [sys.executable, str(SCRIPT), "--backfill"],
+                cwd=repo,
+                env=env,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            self.assertEqual(written.returncode, 0, written.stderr)
+            subprocess.run(["git", "add", "wiki/content"], cwd=repo, check=True)
+            subprocess.run(
+                [
+                    "git",
+                    "-c",
+                    "user.name=Codex Test",
+                    "-c",
+                    "user.email=codex-test@example.invalid",
+                    "commit",
+                    "-m",
+                    "docs: refresh generated wiki",
+                ],
+                cwd=repo,
+                check=True,
+                stdout=subprocess.PIPE,
+            )
+
+            fresh = subprocess.run(
+                [sys.executable, str(SCRIPT), "--check"],
+                cwd=repo,
+                env=env,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            self.assertEqual(fresh.returncode, 0, fresh.stderr)
+        finally:
+            shutil.rmtree(repo.parent)
+
     def test_publish_lookup_uses_wikijs_v2_path_lookup(self):
         module = load_module()
 
