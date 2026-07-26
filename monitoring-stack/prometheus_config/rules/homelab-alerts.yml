@@ -58,7 +58,7 @@ groups:
           summary: Swap usage has remained above 80 percent
 
       - alert: HomelabOomKill
-        expr: increase(node_vmstat_oom_kill[15m]) > 0 or homelab_docker_oom_killed_containers > 0
+        expr: increase(node_vmstat_oom_kill[15m]) > 0 or time() - homelab_docker_latest_oom_timestamp_seconds < 900
         for: 1m
         labels:
           severity: critical

@@ -14,24 +14,30 @@ trap 'rm -f -- "$temporary"' EXIT
 
 docker_unhealthy=0
 docker_oom_killed=0
+docker_latest_oom_timestamp=0
 gluetun_healthy=0
 
 mapfile -t container_ids < <("$DOCKER_BIN" ps -aq)
 if ((${#container_ids[@]} > 0)); then
-    while IFS='|' read -r name running health oom_killed; do
+    while IFS='|' read -r name running health oom_killed finished_at; do
         [[ -n "$name" ]] || continue
         if [[ "$running" == "true" && "$health" == "unhealthy" ]]; then
             docker_unhealthy=$((docker_unhealthy + 1))
         fi
         if [[ "$oom_killed" == "true" ]]; then
             docker_oom_killed=$((docker_oom_killed + 1))
+            if oom_timestamp=$(date --date="$finished_at" +%s 2>/dev/null); then
+                if ((oom_timestamp > docker_latest_oom_timestamp)); then
+                    docker_latest_oom_timestamp=$oom_timestamp
+                fi
+            fi
         fi
         if [[ "$name" == "/gluetun" && "$running" == "true" && "$health" == "healthy" ]]; then
             gluetun_healthy=1
         fi
     done < <(
         "$DOCKER_BIN" inspect \
-            --format '{{.Name}}|{{.State.Running}}|{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}|{{.State.OOMKilled}}' \
+            --format '{{.Name}}|{{.State.Running}}|{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}|{{.State.OOMKilled}}|{{.State.FinishedAt}}' \
             "${container_ids[@]}"
     )
 fi
@@ -76,6 +82,9 @@ fi
     echo '# HELP homelab_docker_oom_killed_containers Number of containers whose current state records an OOM kill.'
     echo '# TYPE homelab_docker_oom_killed_containers gauge'
     printf 'homelab_docker_oom_killed_containers %s\n' "$docker_oom_killed"
+    echo '# HELP homelab_docker_latest_oom_timestamp_seconds Latest recorded Docker OOM termination time.'
+    echo '# TYPE homelab_docker_latest_oom_timestamp_seconds gauge'
+    printf 'homelab_docker_latest_oom_timestamp_seconds %s\n' "$docker_latest_oom_timestamp"
     echo '# HELP homelab_gluetun_healthy Whether the Gluetun container is currently healthy.'
     echo '# TYPE homelab_gluetun_healthy gauge'
     printf 'homelab_gluetun_healthy %s\n' "$gluetun_healthy"
