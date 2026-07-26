@@ -31,6 +31,8 @@ required_ignores=(
     'obsidian-livesync/couchdb-data'
     'spotify-stats/your_spotify_db.corrupt-*'
     'spotify-stats/your_spotify_db.mongo8-crash-*'
+    'home-assistant/config/homeassistant/.storage/google.*'
+    'home-assistant/config/mosquitto/data/mosquitto.db'
     'pingvin-share/redis-data'
 )
 

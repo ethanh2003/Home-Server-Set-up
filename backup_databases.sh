@@ -224,6 +224,15 @@ tar -C "$work_directory" -czf - .
 
 atomic_sqlite_export home-assistant.db HomeAssistant /config/home-assistant_v2.db python
 atomic_sqlite_export home-assistant-2.db HomeAssistant2 /config/home-assistant_v2.db python
+
+# Home Assistant and Mosquitto deliberately protect portions of their live
+# state with owner-only modes. Export those files through their containers so
+# the unprivileged Kopia service can version stable, mode-600 copies.
+atomic_stdout_export home-assistant-storage.tar.gz HomeAssistant \
+    tar -C /config -czf - .storage
+atomic_stdout_export mosquitto-persistence.db mosquitto \
+    sh -euc 'exec cat /mosquitto/data/mosquitto.db'
+
 atomic_sqlite_export linkstack.db linkstack-linkstack-1 /htdocs/database/database.sqlite php-pdo
 
 if [[ "$PAPERLESS_EXPORT_ENABLED" == "1" ]]; then

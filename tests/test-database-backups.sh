@@ -103,6 +103,8 @@ expected_files=(
     obsidian-livesync-couchdb.tar.gz
     home-assistant.db
     home-assistant-2.db
+    home-assistant-storage.tar.gz
+    mosquitto-persistence.db
     linkstack.db
 )
 
@@ -123,7 +125,7 @@ if [[ -e "$BACKUP_DIR/planka.sql" ]]; then
     exit 1
 fi
 
-for required_container in immich_postgres dawarich_db wiki-db mongo obsidian-livesync-couchdb HomeAssistant HomeAssistant2 linkstack-linkstack-1; do
+for required_container in immich_postgres dawarich_db wiki-db mongo obsidian-livesync-couchdb HomeAssistant HomeAssistant2 mosquitto linkstack-linkstack-1; do
     if ! grep -q "$required_container" "$FAKE_DOCKER_CALL_LOG"; then
         echo "FAIL: no export command was issued for $required_container" >&2
         exit 1
