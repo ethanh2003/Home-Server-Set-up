@@ -113,6 +113,7 @@ passed = (payload.get("smart_status") or {}).get("passed")
 healthy = 1 if passed is True else 0
 pending = 0
 uncorrectable = 0
+temperature = (payload.get("temperature") or {}).get("current")
 for item in ((payload.get("ata_smart_attributes") or {}).get("table") or []):
     attribute_id = item.get("id")
     raw = (item.get("raw") or {}).get("value")
@@ -126,6 +127,8 @@ for item in ((payload.get("ata_smart_attributes") or {}).get("table") or []):
 print(f'\''homelab_smart_device_healthy{{device="{device}"}} {healthy}'\'')
 print(f'\''homelab_smart_pending_sectors{{device="{device}"}} {pending}'\'')
 print(f'\''homelab_smart_uncorrectable_sectors{{device="{device}"}} {uncorrectable}'\'')
+if isinstance(temperature, (int, float)):
+    print(f'\''homelab_smart_temperature_celsius{{device="{device}"}} {temperature}'\'')
 ' "$device" <<<"$smart_json"
     done < <(lsblk -dn -o NAME,TYPE)
 } >"$temporary"

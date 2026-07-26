@@ -41,6 +41,14 @@ groups:
         annotations:
           summary: SMART reports pending or uncorrectable sectors
 
+      - alert: HomelabSmartDiskTemperatureHigh
+        expr: homelab_smart_temperature_celsius > 70
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: A disk has remained above 70 degrees Celsius
+
       - alert: HomelabRootFilesystemLow
         expr: 100 * node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"} < 15
         for: 15m

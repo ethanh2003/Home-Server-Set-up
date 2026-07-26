@@ -99,11 +99,13 @@ alerts = (
     / "homelab-alerts.yml"
 ).read_text()
 assert "HomelabCadvisorContainerMetricsMissing" in alerts
+assert "HomelabSmartDiskTemperatureHigh" in alerts
 assert "time() - homelab_docker_latest_oom_timestamp_seconds < 900" in alerts
 assert "or homelab_docker_oom_killed_containers > 0" not in alerts
 
 metrics_script = (root / "scripts" / "update-homelab-metrics.sh").read_text()
 assert "homelab_docker_latest_oom_timestamp_seconds" in metrics_script
+assert "homelab_smart_temperature_celsius" in metrics_script
 
 print(
     "PASS: monitoring, cAdvisor discovery, SMTP, probes, textfile metrics, "
