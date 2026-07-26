@@ -83,11 +83,17 @@ services:
     ports:
     - 9100:9100
   cadvisor:
-    image: gcr.io/cadvisor/cadvisor:v0.47.2
+    image: ghcr.io/google/cadvisor:v0.57.0
     container_name: cadvisor
     restart: unless-stopped
     logging: *default-logging
     privileged: true
+    command:
+    - --docker_only=true
+    - --housekeeping_interval=15s
+    - --store_container_labels=false
+    - --whitelisted_container_labels=com.docker.compose.project,com.docker.compose.service
+    - --enable_metrics=cpu,memory,network,diskIO,oom_event
     devices:
     - /dev/kmsg
     volumes:
@@ -95,6 +101,7 @@ services:
     - /var/run:/var/run:ro
     - /sys:/sys:ro
     - /var/lib/docker/:/var/lib/docker:ro
+    - /var/lib/containerd/:/var/lib/containerd:ro
     - /dev/disk/:/dev/disk:ro
     networks:
     - monitoring

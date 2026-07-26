@@ -96,3 +96,11 @@ groups:
           severity: warning
         annotations:
           summary: A local monitoring target is down
+
+      - alert: HomelabCadvisorContainerMetricsMissing
+        expr: count(container_memory_working_set_bytes{name!=""}) < 20
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: cAdvisor is reachable but is not discovering expected Docker workloads

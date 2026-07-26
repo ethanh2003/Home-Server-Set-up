@@ -57,6 +57,23 @@ assert any(
     for volume in node["volumes"]
 )
 
+cadvisor = monitoring["services"]["cadvisor"]
+assert cadvisor["image"] == "ghcr.io/google/cadvisor:v0.57.0"
+assert "--docker_only=true" in cadvisor["command"]
+assert "--housekeeping_interval=15s" in cadvisor["command"]
+assert "--store_container_labels=false" in cadvisor["command"]
+assert (
+    "--whitelisted_container_labels="
+    "com.docker.compose.project,com.docker.compose.service"
+) in cadvisor["command"]
+assert "--enable_metrics=cpu,memory,network,diskIO,oom_event" in cadvisor["command"]
+assert any(
+    volume["source"].rstrip("/") == "/var/lib/containerd"
+    and volume["target"] == "/var/lib/containerd"
+    and volume.get("read_only")
+    for volume in cadvisor["volumes"]
+)
+
 grafana_env = monitoring["services"]["grafana"]["environment"]
 assert str(grafana_env["GF_SMTP_ENABLED"]).lower() == "true"
 assert grafana_env["GF_SMTP_HOST"] == "smtp-relay:25"
@@ -70,9 +87,23 @@ assert_rotated(stash["services"]["stash"], "stash/stash")
 prometheus = (root / "monitoring-stack/prometheus_config/prometheus.yml").read_text()
 assert "rule_files:" in prometheus
 assert "blackbox_public" in prometheus
+assert "scrape_interval: 15s" in prometheus
+assert "scrape_timeout: 10s" in prometheus
 assert prometheus.count("https://") >= 15
 
-print("PASS: monitoring, SMTP, probes, textfile metrics, and log rotation are configured")
+alerts = (
+    root
+    / "monitoring-stack"
+    / "prometheus_config"
+    / "rules"
+    / "homelab-alerts.yml"
+).read_text()
+assert "HomelabCadvisorContainerMetricsMissing" in alerts
+
+print(
+    "PASS: monitoring, cAdvisor discovery, SMTP, probes, textfile metrics, "
+    "and log rotation are configured"
+)
 PY
 
 docker run --rm \
