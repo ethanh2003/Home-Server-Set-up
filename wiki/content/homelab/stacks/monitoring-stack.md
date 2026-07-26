@@ -41,7 +41,7 @@
 
 ## Images
 
-- `gcr.io/cadvisor/cadvisor:v0.47.2`
+- `ghcr.io/google/cadvisor:v0.57.0`
 - `grafana/grafana-oss:latest`
 - `grafana/loki:latest`
 - `grafana/promtail:latest`
