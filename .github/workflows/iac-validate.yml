@@ -58,6 +58,7 @@ jobs:
       - name: Run IaC tests
         run: |
           ./tests/test-iac-scripts.sh
+          python3 tests/test-actual-auto-sync-resilience.py
 
       - name: Decrypt encrypted env files
         env:

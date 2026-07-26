@@ -25,6 +25,7 @@ services:
       start_period: 30s
   actual-auto-sync:
     image: seriouslag/actual-auto-sync:latest
+    restart: unless-stopped
     environment:
     - ACTUAL_SERVER_URL=http://actualbudget:5006
     - ACTUAL_SERVER_PASSWORD=${ACTUAL_SERVER_PASSWORD}
@@ -36,6 +37,6 @@ services:
     deploy:
       resources:
         limits:
-          memory: 256M
+          memory: 512M
     networks:
     - proxy_net
